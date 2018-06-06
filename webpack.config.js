@@ -5,6 +5,9 @@ var path = require("path")
 module.exports = function(env) {
     var me = [
         {
+            optimization: {
+                minimize: false
+            },
             entry: path.join(__dirname, "src", "app.js"),
             output: {
                 path: path.join(__dirname, "dist"),
