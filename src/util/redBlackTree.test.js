@@ -28,7 +28,7 @@ test("_insert into an empty tree", () => {
 
     expect(tree.root.t[0]).toBe(10)
     expect(tree.root.c).toBe(bb1db.rbt.BLACK)
-    expect(tree.root.p.t).toBe(bb1db.rbt.NIL)
+    expect(tree.root.p.t).toBe(bb1db.rbt.ROOT)
     expect(tree.root.l.t).toBe(bb1db.rbt.NIL)
     expect(tree.root.r.t).toBe(bb1db.rbt.NIL)
 })
@@ -118,4 +118,272 @@ test("_insert 1 lower and 1 higher values", () => {
 
     expect(tree.root.l.p.c).toBe(bb1db.rbt.BLACK)
     expect(tree.root.l.p.t[0]).toBe(10)
+})
+
+test("_rotateLeft root pivot", () => {
+
+    //         100                     150
+    //        /   \     becomes       /   \
+    //      50    150               100    160
+    //     /  \   /  \             /  \        
+    //    30  60 140 160          50  140
+    //                           /  \
+    //                          30  60
+
+    let tree = bb1db.rbt.newRedBlackTree()
+    tree._insert([100]) // P and root
+    tree._insert([50]) // L
+    tree._insert([30]) // Ll
+    tree._insert([60]) // Lr
+    tree._insert([150]) // R
+    tree._insert([140]) // Rl
+    tree._insert([160]) // Rr
+
+    tree._rotateLeft(tree.root)
+
+    expect(tree.root.t[0]).toBe(150)
+    expect(tree.root.p.t).toBe(bb1db.rbt.ROOT)
+
+    expect(tree.root.l.t[0]).toBe(100)
+    expect(tree.root.l.p.t[0]).toBe(150)
+
+    expect(tree.root.l.l.t[0]).toBe(50)
+    expect(tree.root.l.l.p.t[0]).toBe(100)
+
+    expect(tree.root.l.l.l.t[0]).toBe(30)
+    expect(tree.root.l.l.l.p.t[0]).toBe(50)
+
+    expect(tree.root.l.l.r.t[0]).toBe(60)
+    expect(tree.root.l.l.r.p.t[0]).toBe(50)
+
+    expect(tree.root.l.r.t[0]).toBe(140)
+    expect(tree.root.l.r.p.t[0]).toBe(100)
+
+    expect(tree.root.r.t[0]).toBe(160)
+    expect(tree.root.r.p.t[0]).toBe(150)
+})
+
+test("_rotateLeft left node pivot", () => {
+    //           500                    500
+    //           /                      /
+    //         100                     150
+    //        /   \     becomes       /   \
+    //      50    150               100    160
+    //     /  \   /  \             /  \        
+    //    30  60 140 160          50  140
+    //                           /  \
+    //                          30  60
+
+    let tree = bb1db.rbt.newRedBlackTree()
+    tree._insert([500]) // root
+    tree._insert([100]) // P
+    tree._insert([50]) // L
+    tree._insert([30]) // Ll
+    tree._insert([60]) // Lr
+    tree._insert([150]) // R
+    tree._insert([140]) // Rl
+    tree._insert([160]) // Rr
+
+    tree._rotateLeft(tree.root.l)
+
+    expect(tree.root.l.t[0]).toBe(150)
+    expect(tree.root.l.p.t[0]).toBe(500)
+
+    expect(tree.root.l.l.t[0]).toBe(100)
+    expect(tree.root.l.l.p.t[0]).toBe(150)
+
+    expect(tree.root.l.l.l.t[0]).toBe(50)
+    expect(tree.root.l.l.l.p.t[0]).toBe(100)
+
+    expect(tree.root.l.l.l.l.t[0]).toBe(30)
+    expect(tree.root.l.l.l.l.p.t[0]).toBe(50)
+
+    expect(tree.root.l.l.l.r.t[0]).toBe(60)
+    expect(tree.root.l.l.l.r.p.t[0]).toBe(50)
+
+    expect(tree.root.l.l.r.t[0]).toBe(140)
+    expect(tree.root.l.l.r.p.t[0]).toBe(100)
+
+    expect(tree.root.l.r.t[0]).toBe(160)
+    expect(tree.root.l.r.p.t[0]).toBe(150)
+})
+
+test("_rotateLeft right node pivot", () => {
+    //       -500                    -500
+    //          \                       \
+    //         100                     150
+    //        /   \     becomes       /   \
+    //      50    150               100    160
+    //     /  \   /  \             /  \        
+    //    30  60 140 160          50  140
+    //                           /  \
+    //                          30  60
+
+    let tree = bb1db.rbt.newRedBlackTree()
+    tree._insert([-500]) // root
+    tree._insert([100]) // P
+    tree._insert([50]) // L
+    tree._insert([30]) // Ll
+    tree._insert([60]) // Lr
+    tree._insert([150]) // R
+    tree._insert([140]) // Rl
+    tree._insert([160]) // Rr
+
+    tree._rotateLeft(tree.root.r)
+
+    expect(tree.root.r.t[0]).toBe(150)
+    expect(tree.root.r.p.t[0]).toBe(-500)
+
+    expect(tree.root.r.l.t[0]).toBe(100)
+    expect(tree.root.r.l.p.t[0]).toBe(150)
+
+    expect(tree.root.r.l.l.t[0]).toBe(50)
+    expect(tree.root.r.l.l.p.t[0]).toBe(100)
+
+    expect(tree.root.r.l.l.l.t[0]).toBe(30)
+    expect(tree.root.r.l.l.l.p.t[0]).toBe(50)
+
+    expect(tree.root.r.l.l.r.t[0]).toBe(60)
+    expect(tree.root.r.l.l.r.p.t[0]).toBe(50)
+
+    expect(tree.root.r.l.r.t[0]).toBe(140)
+    expect(tree.root.r.l.r.p.t[0]).toBe(100)
+
+    expect(tree.root.r.r.t[0]).toBe(160)
+    expect(tree.root.r.r.p.t[0]).toBe(150)
+})
+
+test("_rotateRight root pivot", () => {
+
+    //         100                      50
+    //        /   \     becomes       /    \
+    //      50    150               30     100
+    //     /  \   /  \                    /   \
+    //    30  60 140 160                 60   150
+    //                                        /  \
+    //                                      140  160
+
+    let tree = bb1db.rbt.newRedBlackTree()
+    tree._insert([100]) // P and root
+    tree._insert([50]) // L
+    tree._insert([30]) // Ll
+    tree._insert([60]) // Lr
+    tree._insert([150]) // R
+    tree._insert([140]) // Rl
+    tree._insert([160]) // Rr
+
+    tree._rotateRight(tree.root)
+
+    expect(tree.root.t[0]).toBe(50)
+    expect(tree.root.p.t).toBe(bb1db.rbt.ROOT)
+
+    expect(tree.root.l.t[0]).toBe(30)
+    expect(tree.root.l.p.t[0]).toBe(50)
+
+    expect(tree.root.r.t[0]).toBe(100)
+    expect(tree.root.r.p.t[0]).toBe(50)
+
+    expect(tree.root.r.l.t[0]).toBe(60)
+    expect(tree.root.r.l.p.t[0]).toBe(100)
+
+    expect(tree.root.r.r.t[0]).toBe(150)
+    expect(tree.root.r.r.p.t[0]).toBe(100)
+
+    expect(tree.root.r.r.l.t[0]).toBe(140)
+    expect(tree.root.r.r.l.p.t[0]).toBe(150)
+
+    expect(tree.root.r.r.r.t[0]).toBe(160)
+    expect(tree.root.r.r.r.p.t[0]).toBe(150)
+})
+
+test("_rotateRight left node pivot", () => {
+
+    //          500                      500
+    //          /                        /
+    //         100                      50
+    //        /   \     becomes       /    \
+    //      50    150               30     100
+    //     /  \   /  \                    /   \
+    //    30  60 140 160                 60   150
+    //                                        /  \
+    //                                      140  160
+
+    let tree = bb1db.rbt.newRedBlackTree()
+    tree._insert([500]) // root
+    tree._insert([100]) // P
+    tree._insert([50]) // L
+    tree._insert([30]) // Ll
+    tree._insert([60]) // Lr
+    tree._insert([150]) // R
+    tree._insert([140]) // Rl
+    tree._insert([160]) // Rr
+
+    tree._rotateRight(tree.root.l)
+
+    expect(tree.root.l.t[0]).toBe(50)
+    expect(tree.root.l.p.t[0]).toBe(500)
+
+    expect(tree.root.l.l.t[0]).toBe(30)
+    expect(tree.root.l.l.p.t[0]).toBe(50)
+
+    expect(tree.root.l.r.t[0]).toBe(100)
+    expect(tree.root.l.r.p.t[0]).toBe(50)
+
+    expect(tree.root.l.r.l.t[0]).toBe(60)
+    expect(tree.root.l.r.l.p.t[0]).toBe(100)
+
+    expect(tree.root.l.r.r.t[0]).toBe(150)
+    expect(tree.root.l.r.r.p.t[0]).toBe(100)
+
+    expect(tree.root.l.r.r.l.t[0]).toBe(140)
+    expect(tree.root.l.r.r.l.p.t[0]).toBe(150)
+
+    expect(tree.root.l.r.r.r.t[0]).toBe(160)
+    expect(tree.root.l.r.r.r.p.t[0]).toBe(150)
+})
+
+test("_rotateRight right node pivot", () => {
+
+    //       -500                    -500
+    //          \                       \
+    //         100                      50
+    //        /   \     becomes       /    \
+    //      50    150               30     100
+    //     /  \   /  \                    /   \
+    //    30  60 140 160                 60   150
+    //                                        /  \
+    //                                      140  160
+
+    let tree = bb1db.rbt.newRedBlackTree()
+    tree._insert([-500]) // root
+    tree._insert([100]) // P
+    tree._insert([50]) // L
+    tree._insert([30]) // Ll
+    tree._insert([60]) // Lr
+    tree._insert([150]) // R
+    tree._insert([140]) // Rl
+    tree._insert([160]) // Rr
+
+    tree._rotateRight(tree.root.r)
+
+    expect(tree.root.r.t[0]).toBe(50)
+    expect(tree.root.r.p.t[0]).toBe(-500)
+
+    expect(tree.root.r.l.t[0]).toBe(30)
+    expect(tree.root.r.l.p.t[0]).toBe(50)
+
+    expect(tree.root.r.r.t[0]).toBe(100)
+    expect(tree.root.r.r.p.t[0]).toBe(50)
+
+    expect(tree.root.r.r.l.t[0]).toBe(60)
+    expect(tree.root.r.r.l.p.t[0]).toBe(100)
+
+    expect(tree.root.r.r.r.t[0]).toBe(150)
+    expect(tree.root.r.r.r.p.t[0]).toBe(100)
+
+    expect(tree.root.r.r.r.l.t[0]).toBe(140)
+    expect(tree.root.r.r.r.l.p.t[0]).toBe(150)
+
+    expect(tree.root.r.r.r.r.t[0]).toBe(160)
+    expect(tree.root.r.r.r.r.p.t[0]).toBe(150)
 })

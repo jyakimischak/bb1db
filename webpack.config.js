@@ -8,6 +8,7 @@ module.exports = function(env) {
             optimization: {
                 minimize: false
             },
+            mode: "none",
             entry: path.join(__dirname, "src", "app.js"),
             output: {
                 path: path.join(__dirname, "dist"),

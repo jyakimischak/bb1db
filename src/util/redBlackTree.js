@@ -17,6 +17,11 @@ const MAX_DEPTH = 1000
 export const NIL = "NIL"
 
 /**
+ * used for the tuple value in the parent of the root node.
+ */
+export const ROOT = "ROOT"
+
+/**
  * Value for red color.
  */
 export const RED = "red"
@@ -50,7 +55,7 @@ export function newRedBlackTree() {
             if(this.root.t === NIL) {
                 this.root = {
                     t : tuple,
-                    p : {t:NIL},
+                    p : {t:ROOT},
                     l : {t:NIL},
                     r : {t:NIL},
                     c : BLACK
@@ -81,7 +86,90 @@ export function newRedBlackTree() {
                     throw `Duplicate key - ${tuple[0]}`
                 }
             }
-        } // _insert
+        }, // _insert
+
+        /**
+         * Rotates the nodes left using the given node as the pivot.
+         * 
+         *             P                       R
+         *           /   \     becomes       /   \
+         *          L     R                 P     Rr
+         *         / \   / \               / \        
+         *        Ll Lr Rl Rr             L  Rl
+         *                               / \
+         *                              Ll Lr
+         */
+        _rotateLeft: function(pivot) {
+            if(pivot == undefined || pivot.t == undefined || pivot.t === NIL) {
+                console.error("_rotateLeft, the pivot must be a non-nil node.")
+                return
+            }
+            let P = pivot
+            let L = pivot.l
+            let Ll = pivot.l.l
+            let Lr = pivot.l.r
+            let R = pivot.r
+            let Rl = pivot.r.l
+            let Rr = pivot.r.r
+
+
+            if(P.p.t === ROOT) {
+                this.root = R
+            } else {
+                if(P.p.l.t[0] == P.t[0]) {
+                    P.p.l = R
+                } else {
+                    P.p.r = R
+                }
+            }
+            R.p = P.p
+            R.l = P
+            P.p = R
+            P.r = Rl
+            Rl.p = P
+        }, // _rotateLeft
+
+        /**
+         * Rotates the nodes right using the given node as the pivot.
+         * 
+         *             P                      L
+         *           /   \     becomes       / \
+         *          L     R                Ll   P
+         *         / \   / \                   / \
+         *        Ll Lr Rl Rr                 Lr  R
+         *                                       / \
+         *                                      Rl Rr
+         */
+        _rotateRight: function(pivot) {
+            if(pivot == undefined || pivot.t == undefined || pivot.t === NIL) {
+                console.error("_rotateLeft, the pivot must be a non-nil node.")
+                return
+            }
+            let P = pivot
+            let L = pivot.l
+            let Ll = pivot.l.l
+            let Lr = pivot.l.r
+            let R = pivot.r
+            let Rl = pivot.r.l
+            let Rr = pivot.r.r
+
+
+            if(P.p.t === ROOT) {
+                this.root = L
+            } else {
+                if(P.p.l.t[0] == P.t[0]) {
+                    P.p.l = L
+                } else {
+                    P.p.r = L
+                }
+            }
+            L.p = P.p
+            L.r = P
+            P.p = L
+            P.l = Lr
+            Lr.p = P
+        } // _rotateRight
+
     }
 }  // function newRedBlackTree()
 
