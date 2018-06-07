@@ -22,14 +22,11 @@ export const NIL = "NIL"
 export const ROOT = "ROOT"
 
 /**
- * Value for red color.
+ * Color values for nodes.
  */
 export const RED = "red"
-
-/**
- * Value for black color.
- */
 export const BLACK = "black"
+export const DOUBLE_BLACK = "doubleBlack"
 
 /**
  * Start up a new red black tree.  This will initially just be a single nil node.
@@ -62,7 +59,7 @@ export function newRedBlackTree() {
                 }
                 this.root.l.p = this.root
                 this.root.r.p = this.root
-                return
+                return this.root
             }
 
             let curr = this.root
@@ -86,6 +83,7 @@ export function newRedBlackTree() {
                     throw `Duplicate key - ${tuple[0]}`
                 }
             }
+            return curr
         }, // _insert
 
         /**
@@ -168,7 +166,39 @@ export function newRedBlackTree() {
             P.p = L
             P.l = Lr
             Lr.p = P
-        } // _rotateRight
+        }, // _rotateRight
+
+        /**
+         * Delete the given node from the tree.
+         */
+        _delete: function(node) {
+            if(node.p.t == ROOT) {
+                this.root = {t:NIL}
+                return
+            }
+
+            if(node.p.l.t[0] == node.t[0]) {
+                if(node.l.t != NIL) {
+                    node.p.l = node.l
+                    node.l.p = node.p
+                } else if (node.r.t != NIL) {
+                    node.p.l = node.r
+                    node.r.p = node.p
+                } else {
+                    node.p.l = {t:NIL, p:node.p}
+                }
+            } else {
+                if(node.l.t != NIL) {
+                    node.p.r = node.l
+                    node.l.p = node.p
+                } else if (node.r.t != NIL) {
+                    node.p.r = node.r
+                    node.r.p = node.p
+                } else {
+                    node.p.r = {t:NIL, p:node.p}
+                }
+            }
+        } // _delete
 
     }
 }  // function newRedBlackTree()

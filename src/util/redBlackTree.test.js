@@ -387,3 +387,32 @@ test("_rotateRight right node pivot", () => {
     expect(tree.root.r.r.r.r.t[0]).toBe(160)
     expect(tree.root.r.r.r.r.p.t[0]).toBe(150)
 })
+
+test("_delete root", () => {
+    let tree = bb1db.rbt.newRedBlackTree()
+    tree._insert([10])
+    tree._delete(tree.root)
+    expect(tree.root.t).toBe(bb1db.rbt.NIL)
+})
+
+test("_delete simple left", () => {
+    let tree = bb1db.rbt.newRedBlackTree()
+    tree._insert([10])
+    tree._insert([0])
+    tree._delete(tree.root.l)
+
+    expect(tree.root.t[0]).toBe(10)
+    expect(tree.root.l.p.t[0]).toBe(10)
+    expect(tree.root.r.p.t[0]).toBe(10)
+})
+
+test("_delete simple right", () => {
+    let tree = bb1db.rbt.newRedBlackTree()
+    tree._insert([10])
+    tree._insert([20])
+    tree._delete(tree.root.r)
+
+    expect(tree.root.t[0]).toBe(10)
+    expect(tree.root.l.p.t[0]).toBe(10)
+    expect(tree.root.r.p.t[0]).toBe(10)
+})
