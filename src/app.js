@@ -1,7 +1,7 @@
 
 module.exports = {
     api: require("./api.js"),
-    redBlackTree: require("./util/redBlackTree.js")
+    rbt: require("./util/redBlackTree.js")
 //     c : require("./js/functionExports.js"),
 //     init : require("./js/init.js"),
 //     const : require("./js/constants.js"),

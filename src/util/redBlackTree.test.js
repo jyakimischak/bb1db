@@ -1,48 +1,121 @@
 const bb1db = require("../../dist/bb1db")
 
-test("newRedBlackTree Created", () => {
-    expect(bb1db.redBlackTree.newRedBlackTree().rootNode.color).toBe(bb1db.redBlackTree.NODE_COLOR.NIL)
+test("newrbt Created", () => {
+    expect(bb1db.rbt.newRedBlackTree().root.t).toBe(bb1db.rbt.NIL)
 })
 
-test("Insert a value into an empty tree", () => {
-    let rbt = bb1db.redBlackTree.newRedBlackTree()
-    rbt.insert(10)
-
-    expect(rbt.rootNode.value).toBe(10)
-    expect(rbt.rootNode.color).toBe(bb1db.redBlackTree.NODE_COLOR.BLACK)
-    expect(rbt.rootNode.parentNode.color).toBe(bb1db.redBlackTree.NODE_COLOR.NIL)
-    expect(rbt.rootNode.leftNode.color).toBe(bb1db.redBlackTree.NODE_COLOR.NIL)
-    expect(rbt.rootNode.rightNode.color).toBe(bb1db.redBlackTree.NODE_COLOR.NIL)
+test("_insert non-array", () => {
+    expect(() => {
+        bb1db.rbt.newRedBlackTree()._insert(10)
+    }).toThrow()
 })
 
-test("Insert a lower value", () => {
-    let rbt = bb1db.redBlackTree.newRedBlackTree()
-    rbt.insert(10)
-    rbt.insert(0)
-
-    expect(rbt.rootNode.leftNode.value).toBe(0)
-    expect(rbt.rootNode.leftNode.color).toBe(bb1db.redBlackTree.NODE_COLOR.RED)
-    expect(rbt.rootNode.leftNode.leftNode.color).toBe(bb1db.redBlackTree.NODE_COLOR.NIL)
-    expect(rbt.rootNode.leftNode.rightNode.color).toBe(bb1db.redBlackTree.NODE_COLOR.NIL)
-
-    expect(rbt.rootNode.leftNode.parentNode.color).toBe(bb1db.redBlackTree.NODE_COLOR.BLACK)
-    expect(rbt.rootNode.leftNode.parentNode.value).toBe(10)
+test("_insert with no 0th element", () => {
+    expect(() => {
+        bb1db.rbt.newRedBlackTree()._insert([])
+    }).toThrow()
 })
 
-test("Insert 2 lower values", () => {
-    let rbt = bb1db.redBlackTree.newRedBlackTree()
-    rbt.insert(10)
-    rbt.insert(5)
-    rbt.insert(0)
+test("_insert duplicate 0th element", () => {
+    expect(() => {
+        bb1db.rbt.newRedBlackTree()._insert([10])._insert([10])
+    }).toThrow()
+})
 
-    expect(rbt.rootNode.leftNode.leftNode.value).toBe(0)
-    expect(rbt.rootNode.leftNode.leftNode.color).toBe(bb1db.redBlackTree.NODE_COLOR.RED)
-    expect(rbt.rootNode.leftNode.leftNode.leftNode.color).toBe(bb1db.redBlackTree.NODE_COLOR.NIL)
-    expect(rbt.rootNode.leftNode.leftNode.rightNode.color).toBe(bb1db.redBlackTree.NODE_COLOR.NIL)
+test("_insert into an empty tree", () => {
+    let tree = bb1db.rbt.newRedBlackTree()
+    tree._insert([10])
+
+    expect(tree.root.t[0]).toBe(10)
+    expect(tree.root.c).toBe(bb1db.rbt.BLACK)
+    expect(tree.root.p.t).toBe(bb1db.rbt.NIL)
+    expect(tree.root.l.t).toBe(bb1db.rbt.NIL)
+    expect(tree.root.r.t).toBe(bb1db.rbt.NIL)
+})
+
+test("_insert a lower value", () => {
+    let tree = bb1db.rbt.newRedBlackTree()
+    tree._insert([10])
+    tree._insert([0])
+
+    expect(tree.root.l.t[0]).toBe(0)
+    expect(tree.root.l.c).toBe(bb1db.rbt.RED)
+    expect(tree.root.l.l.t).toBe(bb1db.rbt.NIL)
+    expect(tree.root.l.r.t).toBe(bb1db.rbt.NIL)
+
+    expect(tree.root.l.p.c).toBe(bb1db.rbt.BLACK)
+    expect(tree.root.l.p.t[0]).toBe(10)
+})
+
+test("_insert a higher value", () => {
+    let tree = bb1db.rbt.newRedBlackTree()
+    tree._insert([10])
+    tree._insert([20])
+
+    expect(tree.root.r.t[0]).toBe(20)
+    expect(tree.root.r.c).toBe(bb1db.rbt.RED)
+    expect(tree.root.r.l.t).toBe(bb1db.rbt.NIL)
+    expect(tree.root.r.r.t).toBe(bb1db.rbt.NIL)
+
+    expect(tree.root.r.p.c).toBe(bb1db.rbt.BLACK)
+    expect(tree.root.r.p.t[0]).toBe(10)
+})
+
+test("_insert 2 lower values", () => {
+    let tree = bb1db.rbt.newRedBlackTree()
+    tree._insert([10])
+    tree._insert([5])
+    tree._insert([0])
+
+    expect(tree.root.l.l.t[0]).toBe(0)
+    expect(tree.root.l.l.c).toBe(bb1db.rbt.RED)
+    expect(tree.root.l.l.l.t).toBe(bb1db.rbt.NIL)
+    expect(tree.root.l.l.r.t).toBe(bb1db.rbt.NIL)
     
-    expect(rbt.rootNode.leftNode.leftNode.parentNode.color).toBe(bb1db.redBlackTree.NODE_COLOR.RED)
-    expect(rbt.rootNode.leftNode.leftNode.parentNode.value).toBe(5)
+    expect(tree.root.l.l.p.c).toBe(bb1db.rbt.RED)
+    expect(tree.root.l.l.p.t[0]).toBe(5)
 
-    expect(rbt.rootNode.leftNode.leftNode.parentNode.parentNode.color).toBe(bb1db.redBlackTree.NODE_COLOR.BLACK)
-    expect(rbt.rootNode.leftNode.leftNode.parentNode.parentNode.value).toBe(10)
+    expect(tree.root.l.l.p.p.c).toBe(bb1db.rbt.BLACK)
+    expect(tree.root.l.l.p.p.t[0]).toBe(10)
+})
+
+test("_insert 2 higher values", () => {
+    let tree = bb1db.rbt.newRedBlackTree()
+    tree._insert([10])
+    tree._insert([20])
+    tree._insert([30])
+
+    expect(tree.root.r.r.t[0]).toBe(30)
+    expect(tree.root.r.r.c).toBe(bb1db.rbt.RED)
+    expect(tree.root.r.r.l.t).toBe(bb1db.rbt.NIL)
+    expect(tree.root.r.r.r.t).toBe(bb1db.rbt.NIL)
+    
+    expect(tree.root.r.r.p.c).toBe(bb1db.rbt.RED)
+    expect(tree.root.r.r.p.t[0]).toBe(20)
+
+    expect(tree.root.r.r.p.p.c).toBe(bb1db.rbt.BLACK)
+    expect(tree.root.r.r.p.p.t[0]).toBe(10)
+})
+
+test("_insert 1 lower and 1 higher values", () => {
+    let tree = bb1db.rbt.newRedBlackTree()
+    tree._insert([10])
+    tree._insert([20])
+    tree._insert([0])
+
+    expect(tree.root.r.t[0]).toBe(20)
+    expect(tree.root.r.c).toBe(bb1db.rbt.RED)
+    expect(tree.root.r.l.t).toBe(bb1db.rbt.NIL)
+    expect(tree.root.r.r.t).toBe(bb1db.rbt.NIL)
+
+    expect(tree.root.l.t[0]).toBe(0)
+    expect(tree.root.l.c).toBe(bb1db.rbt.RED)
+    expect(tree.root.l.l.t).toBe(bb1db.rbt.NIL)
+    expect(tree.root.l.r.t).toBe(bb1db.rbt.NIL)
+    
+    expect(tree.root.r.p.c).toBe(bb1db.rbt.BLACK)
+    expect(tree.root.r.p.t[0]).toBe(10)
+
+    expect(tree.root.l.p.c).toBe(bb1db.rbt.BLACK)
+    expect(tree.root.l.p.t[0]).toBe(10)
 })
