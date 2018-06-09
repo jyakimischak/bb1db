@@ -416,3 +416,115 @@ test("_delete simple right", () => {
     expect(tree.root.l.p.t[0]).toBe(10)
     expect(tree.root.r.p.t[0]).toBe(10)
 })
+
+test("_hasViolations red root", () => {
+    let tree = bb1db.rbt.newRedBlackTree()
+    tree._insert([10])
+    tree.root.c = bb1db.rbt.RED
+    expect(tree._hasViolations()).toBe(true)
+})
+
+test("_hasViolations 2 reds", () => {
+    let tree = bb1db.rbt.newRedBlackTree()
+    tree._insert([10])
+    tree._insert([20])
+    tree._insert([30])
+    expect(tree._hasViolations()).toBe(true)
+})
+
+test("_hasViolations black counts", () => {
+    let tree = bb1db.rbt.newRedBlackTree()
+    tree._insert([10])
+    tree.root.l = {
+        t : [9],
+        l : {t:bb1db.rbt.NIL},
+        r : {t:bb1db.rbt.NIL},
+        c : bb1db.rbt.BLACK,
+        p : tree.root
+    }
+    tree.root.l.l.p = tree.root.l
+    tree.root.l.r.p = tree.root.l
+    tree.root.l.l = {
+        t : [8],
+        l : {t:bb1db.rbt.NIL},
+        r : {t:bb1db.rbt.NIL},
+        c : bb1db.rbt.BLACK,
+        p : tree.root.l
+    }
+    tree.root.l.l.l.p = tree.root.l.l
+    tree.root.l.l.r.p = tree.root.l.l
+    tree.root.r = {
+        t : [11],
+        l : {t:bb1db.rbt.NIL},
+        r : {t:bb1db.rbt.NIL},
+        c : bb1db.rbt.BLACK,
+        p : tree.root
+    }
+    tree.root.r.l.p = tree.root.r
+    tree.root.r.r.p = tree.root.r
+
+    expect(tree._hasViolations()).toBe(true)
+})
+
+test("_hasViolations simple w/ no violations", () => {
+    let tree = bb1db.rbt.newRedBlackTree()
+    tree._insert([10])
+    tree.root.l = {
+        t : [8],
+        l : {t:bb1db.rbt.NIL},
+        r : {t:bb1db.rbt.NIL},
+        c : bb1db.rbt.RED,
+        p : tree.root
+    }
+    tree.root.l.l.p = tree.root.l
+    tree.root.l.r.p = tree.root.l
+    tree.root.l.l = {
+        t : [7],
+        l : {t:bb1db.rbt.NIL},
+        r : {t:bb1db.rbt.NIL},
+        c : bb1db.rbt.BLACK,
+        p : tree.root.l
+    }
+    tree.root.l.l.l.p = tree.root.l.l
+    tree.root.l.l.r.p = tree.root.l.l
+    tree.root.l.r = {
+        t : [9],
+        l : {t:bb1db.rbt.NIL},
+        r : {t:bb1db.rbt.NIL},
+        c : bb1db.rbt.BLACK,
+        p : tree.root.l
+    }
+    tree.root.l.r.l.p = tree.root.l.r
+    tree.root.l.r.r.p = tree.root.l.r
+    tree.root.r = {
+        t : [11],
+        l : {t:bb1db.rbt.NIL},
+        r : {t:bb1db.rbt.NIL},
+        c : bb1db.rbt.BLACK,
+        p : tree.root
+    }
+    tree.root.r.l.p = tree.root.r
+    tree.root.r.r.p = tree.root.r
+
+    expect(tree._hasViolations()).toBe(false)
+})
+
+/**
+ * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/random
+ */
+function getRandomInt(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min)) + min; //The maximum is exclusive and the minimum is inclusive
+}
+
+test("_insertFixViolations 1000 random inserts", () => {
+    let tree = bb1db.rbt.newRedBlackTree()
+    let min = -100000
+    let max = 100000
+
+    for(let i = 0; i < 100; i++) {
+        tree._insertFixViolations(tree._insert([getRandomInt(min, max)]))
+    }
+    expect(tree._hasViolations()).toBe(false)
+})

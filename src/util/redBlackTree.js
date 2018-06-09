@@ -30,6 +30,13 @@ export const DOUBLE_BLACK = "doubleBlack"
 
 /**
  * Start up a new red black tree.  This will initially just be a single nil node.
+ * 
+ * node fields
+ * p - parent
+ * c - color
+ * l - left node
+ * r - right node
+ * t - tuple, 0th element used for ordering
  */
 export function newRedBlackTree() {
     return {
@@ -85,6 +92,63 @@ export function newRedBlackTree() {
             }
             return curr
         }, // _insert
+
+        /**
+         * Fix violations for an insert.
+         */
+        _insertFixViolations: function(startNode) {
+            let curr = startNode
+
+            while(curr.p.t != ROOT) {
+                if(curr.p.p.t == ROOT) { //violation fixes can only occur if there is a grandparent
+                    curr = this.root
+                    break
+                }
+                
+                let parent = curr.p
+                let gParent = curr.p.p
+                let isLeft = parent.l.t[0] == curr.t[0]
+                let isPLeft = gParent.l.t[0] == parent.t[0]
+                let uncle = isPLeft ? gParent.r : gParent.l
+
+                if(curr.c == RED && parent.c == RED) { //is this node red and this nodes's parent a red node
+                    if(uncle.c == RED) { // red uncle
+                        parent.c = BLACK
+                        uncle.c = BLACK
+                        gParent.c = RED
+                        curr = gParent
+                    } else { // black uncle
+                        if(isPLeft && isLeft) { // left, left
+                            this._rotateRight(gParent)
+                            curr.c = RED
+                            parent.c = BLACK
+                            gParent.c = RED
+                        } else if(isPLeft && !isLeft) { // left, right
+                            this._rotateLeft(parent)
+                            this._rotateRight(gParent)
+                            curr.c = BLACK
+                            parent.c = RED
+                            gParent.c = RED
+                        } else if(!isPLeft && !isLeft) { // right, right
+                            this._rotateLeft(gParent)
+                            curr.c = RED
+                            parent.c = BLACK
+                            gParent.c = RED
+                        } else { // right, left
+                            this._rotateRight(parent)
+                            this._rotateLeft(gParent)
+                            curr.c = BLACK
+                            parent.c = RED
+                            gParent.c = RED
+                        }
+                    }
+                } else {
+                    curr = parent
+                }
+            }
+            //root node must always be black, so just set it
+            curr.c = BLACK
+        }, // _insertFixViolations
 
         /**
          * Rotates the nodes left using the given node as the pivot.
@@ -198,7 +262,56 @@ export function newRedBlackTree() {
                     node.p.r = {t:NIL, p:node.p}
                 }
             }
-        } // _delete
+        }, // _delete
+
+        /**
+         * Returns true if there are violations, false otherwise.
+         * 
+         * properties:
+         * 1) every node is either red or black
+         * 2) Root node is black
+         * 3) No 2 adjacent nodes are red
+         * 4) Every path from root to a nil leaf has the same number of black nodes
+         */
+        _hasViolations: function() {
+            if(this.root.c != BLACK) {
+                console.log(`violation - root node is not black it is ${this.root.c}`)
+                return true
+            }
+            let blackCountAtPathEnd = -1 // once we hit the end of the first path set this, then use it to compare afterwards
+            return violationsRecurse(0, this.root, 0)
+
+            function violationsRecurse(depth, curr, blackCount) {
+// console.log(`${curr.p.t == ROOT ? "root ==> " : ""} t:${curr.t} c:${curr.c} blackCount:${blackCount} depth:${depth}`)
+// console.log(curr)
+                if(depth == MAX_DEPTH) { // if we hit max recurse depth say the tree is in violation
+                    return true 
+                }
+                if(curr.t == NIL) {
+                    if(blackCountAtPathEnd == -1) {
+                        blackCountAtPathEnd = blackCount
+                    }
+                    if(blackCountAtPathEnd != blackCount) { // black count violation
+                        console.log(`violation - black count violation at ${curr.p.t}, black count:${blackCount} blackCountAtPathEnd:${blackCountAtPathEnd}`)
+                        return true
+                    } else {
+                        return false
+                    }
+                }
+                if(curr.p.t != ROOT && curr.p.c == RED && curr.c == RED) { // 2 reds violation
+                    console.log(`violation - 2 reds violation at ${curr.p.t}`)
+                    return true
+                }
+                if(!(curr.c == RED || curr.c == BLACK)) { // node color violation
+                    console.log(`violation - node color violation at ${curr.p.t}, color:${curr.p.c}`)
+                    return true
+                }
+
+                return violationsRecurse(depth+1, curr.l, curr.c == BLACK ? blackCount+1 : blackCount) ||
+                    violationsRecurse(depth+1, curr.r, curr.c == BLACK ? blackCount+1 : blackCount)
+
+            }
+        } // _hasViolations
 
     }
 }  // function newRedBlackTree()
