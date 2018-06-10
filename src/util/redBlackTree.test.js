@@ -1,5 +1,25 @@
 const bb1db = require("../../dist/bb1db")
 
+var consoleError = console.error
+var consoleInfo = console.info
+var consoleLog = console.log
+var consoleTrace = console.trace
+var consoleWarn = console.warn
+function disableOutput() {
+    console.error = function(){}
+    console.info = function(){}
+    console.log = function(){}
+    console.trace = function(){}
+    console.warn = function(){}
+}
+function enableOutput() {
+    console.error = consoleError
+    console.info = consoleInfo
+    console.log = consoleLog
+    console.trace = consoleTrace
+    console.warn = consoleWarn
+}
+
 test("newrbt Created", () => {
     expect(bb1db.rbt.newRedBlackTree().root.t).toBe(bb1db.rbt.NIL)
 })
@@ -388,51 +408,27 @@ test("_rotateRight right node pivot", () => {
     expect(tree.root.r.r.r.r.p.t[0]).toBe(150)
 })
 
-test("_delete root", () => {
-    let tree = bb1db.rbt.newRedBlackTree()
-    tree._insert([10])
-    tree._delete(tree.root)
-    expect(tree.root.t).toBe(bb1db.rbt.NIL)
-})
-
-test("_delete simple left", () => {
-    let tree = bb1db.rbt.newRedBlackTree()
-    tree._insert([10])
-    tree._insert([0])
-    tree._delete(tree.root.l)
-
-    expect(tree.root.t[0]).toBe(10)
-    expect(tree.root.l.p.t[0]).toBe(10)
-    expect(tree.root.r.p.t[0]).toBe(10)
-})
-
-test("_delete simple right", () => {
-    let tree = bb1db.rbt.newRedBlackTree()
-    tree._insert([10])
-    tree._insert([20])
-    tree._delete(tree.root.r)
-
-    expect(tree.root.t[0]).toBe(10)
-    expect(tree.root.l.p.t[0]).toBe(10)
-    expect(tree.root.r.p.t[0]).toBe(10)
-})
-
 test("_hasViolations red root", () => {
+    disableOutput()
     let tree = bb1db.rbt.newRedBlackTree()
     tree._insert([10])
     tree.root.c = bb1db.rbt.RED
     expect(tree._hasViolations()).toBe(true)
+    enableOutput()
 })
 
 test("_hasViolations 2 reds", () => {
+    disableOutput()
     let tree = bb1db.rbt.newRedBlackTree()
     tree._insert([10])
     tree._insert([20])
     tree._insert([30])
     expect(tree._hasViolations()).toBe(true)
+    enableOutput()
 })
 
 test("_hasViolations black counts", () => {
+    disableOutput()
     let tree = bb1db.rbt.newRedBlackTree()
     tree._insert([10])
     tree.root.l = {
@@ -464,6 +460,7 @@ test("_hasViolations black counts", () => {
     tree.root.r.r.p = tree.root.r
 
     expect(tree._hasViolations()).toBe(true)
+    enableOutput()
 })
 
 test("_hasViolations simple w/ no violations", () => {
@@ -523,8 +520,106 @@ test("_insertFixViolations 1000 random inserts", () => {
     let min = -100000
     let max = 100000
 
-    for(let i = 0; i < 100; i++) {
+    for(let i = 0; i < 1000; i++) {
         tree._insertFixViolations(tree._insert([getRandomInt(min, max)]))
     }
     expect(tree._hasViolations()).toBe(false)
 })
+
+test("_delete root", () => {
+    let tree = bb1db.rbt.newRedBlackTree()
+    tree._insert([10])
+    tree._delete(tree.root)
+    expect(tree.root.t).toBe(bb1db.rbt.NIL)
+})
+
+test("_delete leaf left", () => {
+    let tree = bb1db.rbt.newRedBlackTree()
+    tree._insert([10])
+    tree._delete(tree._insert([0]))
+    expect(tree.root.t[0]).toBe(10)
+    expect(tree.root.l.t).toBe(bb1db.rbt.NIL)
+    expect(tree.root.l.p.t[0]).toBe(10)
+    expect(tree.root.r.t).toBe(bb1db.rbt.NIL)
+    expect(tree.root.r.p.t[0]).toBe(10)
+})
+
+test("_delete leaf right", () => {
+    let tree = bb1db.rbt.newRedBlackTree()
+    tree._insert([10])
+    tree._delete(tree._insert([20]))
+    expect(tree.root.t[0]).toBe(10)
+    expect(tree.root.l.t).toBe(bb1db.rbt.NIL)
+    expect(tree.root.l.p.t[0]).toBe(10)
+    expect(tree.root.r.t).toBe(bb1db.rbt.NIL)
+    expect(tree.root.r.p.t[0]).toBe(10)
+})
+
+test("_delete left 1 left child", () => {
+    let tree = bb1db.rbt.newRedBlackTree()
+    tree._insert([10])
+    let toDelete = tree._insert([9])
+    tree._insert([8])
+    tree._delete(toDelete)
+    expect(tree.root.t[0]).toBe(10)
+    expect(tree.root.l.t[0]).toBe(8)
+    expect(tree.root.l.p.t[0]).toBe(10)
+})
+
+test("_delete left 1 right child", () => {
+    let tree = bb1db.rbt.newRedBlackTree()
+    tree._insert([10])
+    let toDelete = tree._insert([5])
+    tree._insert([6])
+    tree._delete(toDelete)
+    expect(tree.root.t[0]).toBe(10)
+    expect(tree.root.l.t[0]).toBe(6)
+    expect(tree.root.l.p.t[0]).toBe(10)
+})
+
+test("_delete right 1 left child", () => {
+    let tree = bb1db.rbt.newRedBlackTree()
+    tree._insert([10])
+    let toDelete = tree._insert([20])
+    tree._insert([15])
+    tree._delete(toDelete)
+    expect(tree.root.t[0]).toBe(10)
+    expect(tree.root.r.t[0]).toBe(15)
+    expect(tree.root.l.p.t[0]).toBe(10)
+})
+
+test("_delete right 1 right child", () => {
+    let tree = bb1db.rbt.newRedBlackTree()
+    tree._insert([10])
+    let toDelete = tree._insert([20])
+    tree._insert([25])
+    tree._delete(toDelete)
+    expect(tree.root.t[0]).toBe(10)
+    expect(tree.root.r.t[0]).toBe(25)
+    expect(tree.root.l.p.t[0]).toBe(10)
+})
+
+
+
+
+// test("_delete simple left", () => {
+//     let tree = bb1db.rbt.newRedBlackTree()
+//     tree._insert([10])
+//     tree._insert([0])
+//     tree._delete(tree.root.l)
+
+//     expect(tree.root.t[0]).toBe(10)
+//     expect(tree.root.l.p.t[0]).toBe(10)
+//     expect(tree.root.r.p.t[0]).toBe(10)
+// })
+
+// test("_delete simple right", () => {
+//     let tree = bb1db.rbt.newRedBlackTree()
+//     tree._insert([10])
+//     tree._insert([20])
+//     tree._delete(tree.root.r)
+
+//     expect(tree.root.t[0]).toBe(10)
+//     expect(tree.root.l.p.t[0]).toBe(10)
+//     expect(tree.root.r.p.t[0]).toBe(10)
+// })

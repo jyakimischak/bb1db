@@ -234,6 +234,7 @@ export function newRedBlackTree() {
 
         /**
          * Delete the given node from the tree.
+         * https://www.geeksforgeeks.org/binary-search-tree-set-2-delete/
          */
         _delete: function(node) {
             if(node.p.t == ROOT) {
@@ -241,28 +242,69 @@ export function newRedBlackTree() {
                 return
             }
 
-            if(node.p.l.t[0] == node.t[0]) {
-                if(node.l.t != NIL) {
-                    node.p.l = node.l
-                    node.l.p = node.p
-                } else if (node.r.t != NIL) {
-                    node.p.l = node.r
-                    node.r.p = node.p
+            let curr = node
+            let parent = curr.p
+            let isLeft = parent.l.t[0] == curr.t[0]
+
+            if(node.l.t == NIL && node.r.t == NIL) { // this is a leaf
+                if(isLeft) {
+                    parent.l = {
+                        t:NIL,
+                        p:parent
+                    }
                 } else {
-                    node.p.l = {t:NIL, p:node.p}
+                    parent.r = {
+                        t:NIL,
+                        p:parent
+                    }
                 }
-            } else {
-                if(node.l.t != NIL) {
-                    node.p.r = node.l
-                    node.l.p = node.p
-                } else if (node.r.t != NIL) {
-                    node.p.r = node.r
-                    node.r.p = node.p
+            } else if(curr.l.t != NIL && curr.r.t == NIL) { // only a left child
+                if(isLeft) {
+                    parent.l = curr.l
+                    parent.l.p = parent
                 } else {
-                    node.p.r = {t:NIL, p:node.p}
+                    parent.r = curr.l
+                    parent.r.p = parent
                 }
+            } else if(curr.l.t == NIL && curr.r.t != NIL) { // only a right child
+                if(isLeft) {
+                    parent.l = curr.r
+                    parent.l.p = parent
+                } else {
+                    parent.r = curr.r
+                    parent.r.p = parent
+                }
+            } else { // 2 children
+                let ios = getInOrderSuccessor(curr.r, 0)
+                curr.t = ios.t
+            }
+
+            /**
+             * Get the next highest node, this should be the leaf from the left path of the right child.
+             */
+            function getInOrderSuccessor(curr, depth) {
+                if(depth == MAX_DEPTH) {
+                    console.error("getInOrderSuccessor - max recurse depth reached!")
+                    return
+                }
+
+                if(curr.l.t == NIL) { // we found it, remove it from the tree and return the node
+                    if(curr.r.t == NIL) {
+                        curr.p.l = {t:NIL, p:curr.p}
+                    } else {
+                        curr.p.l = curr.r
+                        curr.r.p = curr.p
+                    }
+                    return curr
+                }
+                getInOrderSuccessor(curr.l, depth+1)
             }
         }, // _delete
+
+        _deleteFixViolations: function(startNode) {
+            let curr = startNode
+
+        },
 
         /**
          * Returns true if there are violations, false otherwise.
@@ -275,7 +317,7 @@ export function newRedBlackTree() {
          */
         _hasViolations: function() {
             if(this.root.c != BLACK) {
-                console.log(`violation - root node is not black it is ${this.root.c}`)
+                console.warn(`violation - root node is not black it is ${this.root.c}`)
                 return true
             }
             let blackCountAtPathEnd = -1 // once we hit the end of the first path set this, then use it to compare afterwards
@@ -292,18 +334,18 @@ export function newRedBlackTree() {
                         blackCountAtPathEnd = blackCount
                     }
                     if(blackCountAtPathEnd != blackCount) { // black count violation
-                        console.log(`violation - black count violation at ${curr.p.t}, black count:${blackCount} blackCountAtPathEnd:${blackCountAtPathEnd}`)
+                        console.warn(`violation - black count violation at ${curr.p.t}, black count:${blackCount} blackCountAtPathEnd:${blackCountAtPathEnd}`)
                         return true
                     } else {
                         return false
                     }
                 }
                 if(curr.p.t != ROOT && curr.p.c == RED && curr.c == RED) { // 2 reds violation
-                    console.log(`violation - 2 reds violation at ${curr.p.t}`)
+                    console.warn(`violation - 2 reds violation at ${curr.p.t}`)
                     return true
                 }
                 if(!(curr.c == RED || curr.c == BLACK)) { // node color violation
-                    console.log(`violation - node color violation at ${curr.p.t}, color:${curr.p.c}`)
+                    console.warn(`violation - node color violation at ${curr.p.t}, color:${curr.p.c}`)
                     return true
                 }
 
