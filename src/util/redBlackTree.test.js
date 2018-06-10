@@ -585,7 +585,7 @@ test("_delete right 1 left child", () => {
     tree._delete(toDelete)
     expect(tree.root.t[0]).toBe(10)
     expect(tree.root.r.t[0]).toBe(15)
-    expect(tree.root.l.p.t[0]).toBe(10)
+    expect(tree.root.r.p.t[0]).toBe(10)
 })
 
 test("_delete right 1 right child", () => {
@@ -596,10 +596,34 @@ test("_delete right 1 right child", () => {
     tree._delete(toDelete)
     expect(tree.root.t[0]).toBe(10)
     expect(tree.root.r.t[0]).toBe(25)
-    expect(tree.root.l.p.t[0]).toBe(10)
+    expect(tree.root.r.p.t[0]).toBe(10)
 })
 
+test("_delete left 2 children", () => {
+    let tree = bb1db.rbt.newRedBlackTree()
+    tree._insert([10])
+    let toDelete = tree._insert([5])
+    tree._insert([6])
+    tree._insert([4])
+    tree._delete(toDelete)
+    expect(tree.root.t[0]).toBe(10)
+    expect(tree.root.l.t[0]).toBe(6)
+    expect(tree.root.l.p.t[0]).toBe(10)
+    expect(tree.root.l.l.t[0]).toBe(4)
+})
 
+test("_delete right 2 children", () => {
+    let tree = bb1db.rbt.newRedBlackTree()
+    tree._insert([0])
+    let toDelete = tree._insert([5])
+    tree._insert([6])
+    tree._insert([4])
+    tree._delete(toDelete)
+    expect(tree.root.t[0]).toBe(0)
+    expect(tree.root.r.t[0]).toBe(6)
+    expect(tree.root.r.p.t[0]).toBe(0)
+    expect(tree.root.r.l.t[0]).toBe(4)
+})
 
 
 // test("_delete simple left", () => {

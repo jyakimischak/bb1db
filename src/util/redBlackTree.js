@@ -290,9 +290,9 @@ export function newRedBlackTree() {
 
                 if(curr.l.t == NIL) { // we found it, remove it from the tree and return the node
                     if(curr.r.t == NIL) {
-                        curr.p.l = {t:NIL, p:curr.p}
+                        curr.p.r = {t:NIL, p:curr.p}
                     } else {
-                        curr.p.l = curr.r
+                        curr.p.r = curr.r
                         curr.r.p = curr.p
                     }
                     return curr
