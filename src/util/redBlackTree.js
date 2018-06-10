@@ -60,8 +60,8 @@ export function newRedBlackTree() {
                 this.root = {
                     t : tuple,
                     p : {t:ROOT},
-                    l : {t:NIL},
-                    r : {t:NIL},
+                    l : {t:NIL, c:BLACK},
+                    r : {t:NIL, c:BLACK},
                     c : BLACK
                 }
                 this.root.l.p = this.root
@@ -76,8 +76,8 @@ export function newRedBlackTree() {
                 if(curr.t === NIL) {
                     //found location, insert
                     curr.t = tuple,
-                    curr.l = {t:NIL},
-                    curr.r = {t:NIL},
+                    curr.l = {t:NIL, c:BLACK},
+                    curr.r = {t:NIL, c:BLACK},
                     curr.c = RED
                     curr.l.p = curr
                     curr.r.p = curr
@@ -235,6 +235,10 @@ export function newRedBlackTree() {
         /**
          * Delete the given node from the tree.
          * https://www.geeksforgeeks.org/binary-search-tree-set-2-delete/
+         * https://www.geeksforgeeks.org/red-black-tree-set-3-delete-2/
+         * 
+         * v - node to be deleted
+         * u - node replacing v
          */
         _delete: function(node) {
             if(node.p.t == ROOT) {
@@ -246,17 +250,24 @@ export function newRedBlackTree() {
             let parent = curr.p
             let isLeft = parent.l.t[0] == curr.t[0]
 
+            let u = null
+            let v = curr
+
             if(node.l.t == NIL && node.r.t == NIL) { // this is a leaf
                 if(isLeft) {
                     parent.l = {
                         t:NIL,
-                        p:parent
+                        p:parent,
+                        c:BLACK
                     }
+                    u = parent.l
                 } else {
                     parent.r = {
                         t:NIL,
-                        p:parent
+                        p:parent,
+                        c:BLACK
                     }
+                    u = parent.r
                 }
             } else if(curr.l.t != NIL && curr.r.t == NIL) { // only a left child
                 if(isLeft) {
@@ -266,6 +277,7 @@ export function newRedBlackTree() {
                     parent.r = curr.l
                     parent.r.p = parent
                 }
+                u = curr.l
             } else if(curr.l.t == NIL && curr.r.t != NIL) { // only a right child
                 if(isLeft) {
                     parent.l = curr.r
@@ -274,10 +286,54 @@ export function newRedBlackTree() {
                     parent.r = curr.r
                     parent.r.p = parent
                 }
+                u = curr.r
             } else { // 2 children
                 let ios = getInOrderSuccessor(curr.r, 0)
                 curr.t = ios.t
+                ios.p = curr.p
+                ios.l = curr.l
+                ios.r = curr.r
+                u = ios
             }
+
+            //balance tree
+            if(u.c == RED || v.c == RED) {
+                u.c = BLACK
+            } else { // both are black
+                u.c = DOUBLE_BLACK
+            }
+
+            let depth = 0
+            while(u.p.t != ROOT && depth < MAX_DEPTH) {
+                let uIsLeft = u.p.l.t[0] == u.t[0]
+                let sibling = uIsLeft ? u.p.r : u.p.l
+                let sIsLeft = sibling.p.l.t[0] == sibling.t[0]
+                let parent = u.p
+                let r = null // will be the red child of sibling
+
+                if(sibling.c == BLACK && (sibling.l.c == RED || sibling.r.c == RED)) {
+                    r = sibling.l.c == RED ? sibling.l : sibling.r
+                    let rIsLeft = sibling.l.c == RED
+
+                    if(uIsLeft && rIsLeft) { //left left
+                        this._rotateRight(parent)
+                    } else if(uIsLeft && !rIsLeft) { //left right
+                        this._rotateRight(sibling)
+                    } else if(!uIsLeft && !rIsLeft) { //right right
+                        this._rotateLeft(parent)
+                    } else { //right left
+                        this._rotateLeft(sibling)
+                    }
+                } else if(sibling.c == BLACK && sibling.l.c == BLACK && sibling.r.c == BLACK) {
+
+                }
+
+
+                depth++
+            }
+            //u is now root, color it black (to ensure it's not set to double black)
+            u.c = BLACK
+
 
             /**
              * Get the next highest node, this should be the leaf from the left path of the right child.
@@ -290,7 +346,7 @@ export function newRedBlackTree() {
 
                 if(curr.l.t == NIL) { // we found it, remove it from the tree and return the node
                     if(curr.r.t == NIL) {
-                        curr.p.r = {t:NIL, p:curr.p}
+                        curr.p.r = {t:NIL, p:curr.p, c:BLACK}
                     } else {
                         curr.p.r = curr.r
                         curr.r.p = curr.p
