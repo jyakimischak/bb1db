@@ -289,6 +289,8 @@ export function newRedBlackTree() {
                 u = curr.r
             } else { // 2 children
                 let ios = this._delete_getInOrderSuccessor(curr.r, 0)
+console.log("--------------------------------------------")
+console.log(ios)
                 curr.t = ios.t
                 ios.p = curr.p
                 ios.l = curr.l
@@ -328,11 +330,14 @@ export function newRedBlackTree() {
          * uvnObj = {u:node, v:node, needsFixing:boolean}
          */
         _deleteFixViolations: function(uvnObj) {
-console.log("---------------- _deleteFixViolations")
+console.log(`---------------- _deleteFixViolations needsFixing:${uvnObj.needsFixing}`)
             if(!uvnObj.needsFixing) {
                 return
             }
-
+console.log(uvnObj)
+console.log(uvnObj.u)
+console.log(uvnObj.u.p)
+            
             let u = uvnObj.u
             let v = uvnObj.v
 
@@ -340,7 +345,6 @@ console.log("---------------- _deleteFixViolations")
             if(u.c == RED || v.c == RED) {
                 u.c = BLACK
             } else { // both are black
-return
                 u.c = DOUBLE_BLACK
 
                 let depth = 0
@@ -356,15 +360,17 @@ console.log("-------------------------- 1")
                         r = sibling.l.c == RED ? sibling.l : sibling.r
                         let rIsLeft = sibling.l.c == RED
 
-                        if(uIsLeft && rIsLeft) { //left left
+                        if(sIsLeft && rIsLeft) { //left left
                             this._rotateRight(parent)
-                        } else if(uIsLeft && !rIsLeft) { //left right
+                        } else if(sIsLeft && !rIsLeft) { //left right
                             this._rotateRight(sibling)
-                        } else if(!uIsLeft && !rIsLeft) { //right right
+                        } else if(!sIsLeft && !rIsLeft) { //right right
                             this._rotateLeft(parent)
                         } else { //right left
                             this._rotateLeft(sibling)
                         }
+                        u.c = BLACK
+                        r.c = BLACK
                     } else if(sibling.c == BLACK && sibling.l.c == BLACK && sibling.r.c == BLACK) {
 console.log("-------------------------- 2")
                         u.c = BLACK
@@ -381,8 +387,9 @@ console.log("-------------------------- 3")
                         } else {
                             this._rotateRight(u.p)
                         }
+                        u.c = BLACK
+                        u.p.c = BLACK
                     }
-
                     depth++
                 }
                 if(depth == MAX_DEPTH) {
@@ -412,8 +419,8 @@ console.log("-------------------------- 3")
             return violationsRecurse(0, this.root, 0)
 
             function violationsRecurse(depth, curr, blackCount) {
-console.log(`${curr.p.t == ROOT ? "root ==> " : ""} t:${curr.t} c:${curr.c} blackCount:${blackCount} depth:${depth}`)
-console.log(curr)
+// console.log(`${curr.p.t == ROOT ? "root ==> " : ""} t:${curr.t} c:${curr.c} blackCount:${blackCount} depth:${depth}`)
+// console.log(curr)
                 if(depth == MAX_DEPTH) { // if we hit max recurse depth say the tree is in violation
                     return true 
                 }
