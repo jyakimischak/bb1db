@@ -235,15 +235,15 @@ export function newRedBlackTree() {
         /**
          * Delete the given node from the tree.
          * https://www.geeksforgeeks.org/binary-search-tree-set-2-delete/
-         * https://www.geeksforgeeks.org/red-black-tree-set-3-delete-2/
          * 
          * v - node to be deleted
          * u - node replacing v
+         * returns {u:node, v:node, needsFixing:boolean}
          */
         _delete: function(node) {
             if(node.p.t == ROOT) {
                 this.root = {t:NIL}
-                return
+                return {u:null, v:null, needsFixing:false}
             }
 
             let curr = node
@@ -288,78 +288,110 @@ export function newRedBlackTree() {
                 }
                 u = curr.r
             } else { // 2 children
-                let ios = getInOrderSuccessor(curr.r, 0)
+                let ios = this._delete_getInOrderSuccessor(curr.r, 0)
                 curr.t = ios.t
                 ios.p = curr.p
                 ios.l = curr.l
                 ios.r = curr.r
                 u = ios
             }
+            return {u:u, v:v, needsFixing:true}
+
+        }, // _delete
+
+
+        /**
+         * Get the next highest node, this should be the leaf from the left path of the right child.
+         */
+        _delete_getInOrderSuccessor: function(curr, depth) {
+            if(depth == MAX_DEPTH) {
+                console.error("getInOrderSuccessor - max recurse depth reached!")
+                return
+            }
+
+            if(curr.t != NIL && curr.l.t == NIL) { // we found it, remove it from the tree and return the node
+                if(curr.r.t == NIL) {
+                    curr.p.r = {t:NIL, p:curr.p, c:BLACK}
+                } else {
+                    curr.p.r = curr.r
+                    curr.r.p = curr.p
+                }
+                return curr
+            }
+            return this._delete_getInOrderSuccessor(curr.l, depth+1)
+        },
+        
+
+        /**
+         * Fix violations and balance the tree after deleting.
+         * https://www.geeksforgeeks.org/red-black-tree-set-3-delete-2/
+         * uvnObj = {u:node, v:node, needsFixing:boolean}
+         */
+        _deleteFixViolations: function(uvnObj) {
+console.log("---------------- _deleteFixViolations")
+            if(!uvnObj.needsFixing) {
+                return
+            }
+
+            let u = uvnObj.u
+            let v = uvnObj.v
 
             //balance tree
             if(u.c == RED || v.c == RED) {
                 u.c = BLACK
             } else { // both are black
+return
                 u.c = DOUBLE_BLACK
-            }
 
-            let depth = 0
-            while(u.p.t != ROOT && depth < MAX_DEPTH) {
-                let uIsLeft = u.p.l.t[0] == u.t[0]
-                let sibling = uIsLeft ? u.p.r : u.p.l
-                let sIsLeft = sibling.p.l.t[0] == sibling.t[0]
-                let parent = u.p
-                let r = null // will be the red child of sibling
+                let depth = 0
+                while(u.p.t != ROOT && u.c == DOUBLE_BLACK && depth < MAX_DEPTH) {
+                    let uIsLeft = u.p.l.t[0] == u.t[0]
+                    let sibling = uIsLeft ? u.p.r : u.p.l
+                    let sIsLeft = sibling.p.l.t[0] == sibling.t[0]
+                    let parent = u.p
+                    let r = null // will be the red child of sibling
 
-                if(sibling.c == BLACK && (sibling.l.c == RED || sibling.r.c == RED)) {
-                    r = sibling.l.c == RED ? sibling.l : sibling.r
-                    let rIsLeft = sibling.l.c == RED
+                    if(sibling.c == BLACK && (sibling.l.c == RED || sibling.r.c == RED)) {
+console.log("-------------------------- 1")
+                        r = sibling.l.c == RED ? sibling.l : sibling.r
+                        let rIsLeft = sibling.l.c == RED
 
-                    if(uIsLeft && rIsLeft) { //left left
-                        this._rotateRight(parent)
-                    } else if(uIsLeft && !rIsLeft) { //left right
-                        this._rotateRight(sibling)
-                    } else if(!uIsLeft && !rIsLeft) { //right right
-                        this._rotateLeft(parent)
-                    } else { //right left
-                        this._rotateLeft(sibling)
+                        if(uIsLeft && rIsLeft) { //left left
+                            this._rotateRight(parent)
+                        } else if(uIsLeft && !rIsLeft) { //left right
+                            this._rotateRight(sibling)
+                        } else if(!uIsLeft && !rIsLeft) { //right right
+                            this._rotateLeft(parent)
+                        } else { //right left
+                            this._rotateLeft(sibling)
+                        }
+                    } else if(sibling.c == BLACK && sibling.l.c == BLACK && sibling.r.c == BLACK) {
+console.log("-------------------------- 2")
+                        u.c = BLACK
+                        if(parent.c == RED) {
+                            parent.c = BLACK
+                        } else {
+                            parent.c = DOUBLE_BLACK
+                            u = parent
+                        }
+                    } else if(sibling.c == RED) {
+console.log("-------------------------- 3")
+                        if(sIsLeft) {
+                            this._rotateLeft(u.p)
+                        } else {
+                            this._rotateRight(u.p)
+                        }
                     }
-                } else if(sibling.c == BLACK && sibling.l.c == BLACK && sibling.r.c == BLACK) {
 
+                    depth++
                 }
-
-
-                depth++
-            }
-            //u is now root, color it black (to ensure it's not set to double black)
-            u.c = BLACK
-
-
-            /**
-             * Get the next highest node, this should be the leaf from the left path of the right child.
-             */
-            function getInOrderSuccessor(curr, depth) {
                 if(depth == MAX_DEPTH) {
-                    console.error("getInOrderSuccessor - max recurse depth reached!")
-                    return
+                    console.warn("_deleteFixViolations - max depth reached")
                 }
-
-                if(curr.l.t == NIL) { // we found it, remove it from the tree and return the node
-                    if(curr.r.t == NIL) {
-                        curr.p.r = {t:NIL, p:curr.p, c:BLACK}
-                    } else {
-                        curr.p.r = curr.r
-                        curr.r.p = curr.p
-                    }
-                    return curr
-                }
-                getInOrderSuccessor(curr.l, depth+1)
             }
-        }, // _delete
-
-        _deleteFixViolations: function(startNode) {
-            let curr = startNode
-
+            if(u.p.t == ROOT) { // if we hit the root ensure that it is black
+                u.c = BLACK
+            }
         },
 
         /**
@@ -380,8 +412,8 @@ export function newRedBlackTree() {
             return violationsRecurse(0, this.root, 0)
 
             function violationsRecurse(depth, curr, blackCount) {
-// console.log(`${curr.p.t == ROOT ? "root ==> " : ""} t:${curr.t} c:${curr.c} blackCount:${blackCount} depth:${depth}`)
-// console.log(curr)
+console.log(`${curr.p.t == ROOT ? "root ==> " : ""} t:${curr.t} c:${curr.c} blackCount:${blackCount} depth:${depth}`)
+console.log(curr)
                 if(depth == MAX_DEPTH) { // if we hit max recurse depth say the tree is in violation
                     return true 
                 }

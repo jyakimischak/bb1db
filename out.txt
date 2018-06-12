@@ -1,0 +1,6 @@
+  console.log dist/bb1db.js:470
+    ---------------- _deleteFixViolations
+
+  console.warn dist/bb1db.js:547
+    violation - root node is not black it is undefined
+

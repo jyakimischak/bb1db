@@ -625,4 +625,47 @@ test("_delete right 2 children", () => {
     expect(tree.root.r.l.t[0]).toBe(4)
 })
 
+test("_delete_getInOrderSuccessor", () => {
+    let tree = bb1db.rbt.newRedBlackTree()
+    let testNode = tree._insert([50])
+    tree._insert([40])
+    tree._insert([70])
+    tree._insert([60])
+    tree._insert([80])
+    let ios = tree._delete_getInOrderSuccessor(testNode.r, 0)
+    expect(ios.t[0]).toBe(60)
+})
+
+test("_deleteFixViolations 10000 random inserts, delete 100", () => {
+    let tree = bb1db.rbt.newRedBlackTree()
+    let min = -100000
+    let max = 100000
+    let toDelete = []
+
+    // for(let i = 0; i < 10000; i++) {
+    //     let node = tree._insert([getRandomInt(min, max)])
+    //     tree._insertFixViolations(node)
+    //     if(i % 100 == 0) {
+    //         toDelete.push(node)
+    //     }
+    // }
+
+    for(let i = 0; i < 20; i++) {
+        let node = tree._insert([getRandomInt(min, max)])
+        tree._insertFixViolations(node)
+        if(i == 5) {
+            toDelete.push(node)
+        }
+    }
+
+
+
+    // toDelete.forEach(e => {
+    //     tree._deleteFixViolations(tree._delete(e))
+    //     expect(tree._hasViolations()).toBe(false)
+    // })
+    tree._deleteFixViolations(tree._delete(toDelete[0]))
+    expect(tree._hasViolations()).toBe(false)
+})
+
 
