@@ -273,6 +273,17 @@ test("_rotateLeft right node pivot", () => {
     expect(tree.root.r.r.p.t[0]).toBe(150)
 })
 
+test("_rotateLeft empty left subtree", () => {
+    let tree = bb1db.rbt.newRedBlackTree()
+    tree._insert([100]) // root
+    tree._insert([200])
+
+    tree._rotateLeft(tree.root)
+
+    expect(tree.root.t[0]).toBe(200)
+    expect(tree.root.l.t[0]).toBe(100)
+})
+
 test("_rotateRight root pivot", () => {
 
     //         100                      50
@@ -408,6 +419,17 @@ test("_rotateRight right node pivot", () => {
     expect(tree.root.r.r.r.r.p.t[0]).toBe(150)
 })
 
+test("_rotateRight empty right subtree", () => {
+    let tree = bb1db.rbt.newRedBlackTree()
+    tree._insert([200]) // root
+    tree._insert([100])
+
+    tree._rotateRight(tree.root)
+
+    expect(tree.root.t[0]).toBe(100)
+    expect(tree.root.r.t[0]).toBe(200)
+})
+
 test("_hasViolations red root", () => {
     disableOutput()
     let tree = bb1db.rbt.newRedBlackTree()
@@ -502,7 +524,7 @@ test("_hasViolations simple w/ no violations", () => {
     }
     tree.root.r.l.p = tree.root.r
     tree.root.r.r.p = tree.root.r
-
+        
     expect(tree._hasViolations()).toBe(false)
 })
 
@@ -636,36 +658,25 @@ test("_delete_getInOrderSuccessor", () => {
     expect(ios.t[0]).toBe(60)
 })
 
-test("_deleteFixViolations 10000 random inserts, delete 100", () => {
-    let tree = bb1db.rbt.newRedBlackTree()
-    let min = -100000
-    let max = 100000
-    let toDelete = []
+test("_deleteFixViolations 100 random inserts, delete 5, 10 times", () => {
+    let min = -1000000
+    let max = 1000000
 
-    // for(let i = 0; i < 10000; i++) {
-    //     let node = tree._insert([getRandomInt(min, max)])
-    //     tree._insertFixViolations(node)
-    //     if(i % 100 == 0) {
-    //         toDelete.push(node)
-    //     }
-    // }
+    for(let timesCtr = 0; timesCtr < 10; timesCtr++) {
+        let tree = bb1db.rbt.newRedBlackTree()
+        let toDelete = []
 
-    for(let i = 0; i < 20; i++) {
-        let node = tree._insert([getRandomInt(min, max)])
-        tree._insertFixViolations(node)
-        if(i == 5) {
-            toDelete.push(node)
+        for(let insertCtr = 0; insertCtr < 100; insertCtr++) {
+            let node = tree._insert([getRandomInt(min, max)])
+            tree._insertFixViolations(node)
+            if(insertCtr % 20 == 0) {
+                toDelete.push(node)
+            }
+            toDelete.forEach(e => {
+                tree._deleteFixViolations(tree._delete(e))
+                expect(tree._hasViolations()).toBe(false)
+            })
         }
     }
-
-
-
-    // toDelete.forEach(e => {
-    //     tree._deleteFixViolations(tree._delete(e))
-    //     expect(tree._hasViolations()).toBe(false)
-    // })
-    tree._deleteFixViolations(tree._delete(toDelete[0]))
-    expect(tree._hasViolations()).toBe(false)
 })
-
 

@@ -174,7 +174,6 @@ export function newRedBlackTree() {
             let Rl = pivot.r.l
             let Rr = pivot.r.r
 
-
             if(P.p.t === ROOT) {
                 this.root = R
             } else {
@@ -233,77 +232,72 @@ export function newRedBlackTree() {
         }, // _rotateRight
 
         /**
-         * Delete the given node from the tree.
-         * https://www.geeksforgeeks.org/binary-search-tree-set-2-delete/
-         * 
-         * v - node to be deleted
-         * u - node replacing v
-         * returns {u:node, v:node, needsFixing:boolean}
+         * Delete the node from the tree, set the color of the resulting node and return it.
          */
         _delete: function(node) {
-            if(node.p.t == ROOT) {
+            if(node.p.t == ROOT && node.l.t == NIL && node.r.t == NIL) {
                 this.root = {t:NIL}
-                return {u:null, v:null, needsFixing:false}
+                return this.root
             }
-
-            let curr = node
-            let parent = curr.p
-            let isLeft = parent.l.t[0] == curr.t[0]
-
-            let u = null
-            let v = curr
-
+            let u = node // the node to return that rebalancing needs to start from
             if(node.l.t == NIL && node.r.t == NIL) { // this is a leaf
+                let parent = node.p
+                let isLeft = parent.l.t[0] == node.t[0]
                 if(isLeft) {
                     parent.l = {
                         t:NIL,
-                        p:parent,
-                        c:BLACK
+                        p:parent
                     }
                     u = parent.l
                 } else {
                     parent.r = {
                         t:NIL,
-                        p:parent,
-                        c:BLACK
+                        p:parent
                     }
                     u = parent.r
                 }
-            } else if(curr.l.t != NIL && curr.r.t == NIL) { // only a left child
-                if(isLeft) {
-                    parent.l = curr.l
-                    parent.l.p = parent
+                if(node.c == RED) {
+                    u.c = BLACK
                 } else {
-                    parent.r = curr.l
-                    parent.r.p = parent
+                    u.c = DOUBLE_BLACK
                 }
-                u = curr.l
-            } else if(curr.l.t == NIL && curr.r.t != NIL) { // only a right child
-                if(isLeft) {
-                    parent.l = curr.r
-                    parent.l.p = parent
+            } else if(node.l.t != NIL && node.r.t != NIL) { // 2 children
+                let ios = this._delete_getInOrderSuccessor(node.r, 0)
+                node.t = ios.t
+                u = this._delete(ios)
+            } else { // 1 child
+                let childIsLeft = node.l.t != NIL && node.r.t == NIL
+                let child = childIsLeft ? node.l : node.r
+                node.t = child.t
+                if(childIsLeft) {
+                    node.l = {
+                        t:NIL,
+                        p:node,
+                        c:BLACK
+                    }
                 } else {
-                    parent.r = curr.r
-                    parent.r.p = parent
+                    node.r = {
+                        t:NIL,
+                        p:node,
+                        c:BLACK
+                    }
                 }
-                u = curr.r
-            } else { // 2 children
-                let ios = this._delete_getInOrderSuccessor(curr.r, 0)
-console.log("--------------------------------------------")
-console.log(ios)
-                curr.t = ios.t
-                ios.p = curr.p
-                ios.l = curr.l
-                ios.r = curr.r
-                u = ios
+                u = node
+                if(u.c == RED) {
+                    u.c = BLACK
+                } else {
+                    if(child.c == RED) {
+                        u.c = BLACK
+                    } else {
+                        u.c = DOUBLE_BLACK
+                    }
+                }
             }
-            return {u:u, v:v, needsFixing:true}
-
-        }, // _delete
-
+            return u
+        },
 
         /**
-         * Get the next highest node, this should be the leaf from the left path of the right child.
+         * Get the next highest node, this should be the leftmost node of the right subtree.
          */
         _delete_getInOrderSuccessor: function(curr, depth) {
             if(depth == MAX_DEPTH) {
@@ -325,79 +319,109 @@ console.log(ios)
         
 
         /**
-         * Fix violations and balance the tree after deleting.
-         * https://www.geeksforgeeks.org/red-black-tree-set-3-delete-2/
-         * uvnObj = {u:node, v:node, needsFixing:boolean}
+         * Balance and recolor the tree.
+         * https://www.youtube.com/watch?v=CTvfzU_uNKE
+         * 
+         * 6 double black cases that we must handle (and ther mirror cases), left cases shown
+         * ----------------------------------------------------------------------------------
+         * r - red, b - black, db - double black, a - any, [] subtree
+         * 
+         * 1) - terminating case
+         * root->R(db)          R(b)
+         *        /  \   =>     / \
+         *       []  []        [] []
+         * 2)
+         *       P(b)                     S(b)               
+         *     /    \                   /     \
+         *  N(db)   S(r)             P(r)      Y(b)
+         *   / \    /   \     =>    /   \       /\
+         *  [] []  X(b) Y(b)      N(db)  X(b)  [][]
+         *          /\   /\         /\    /\
+         *         [][] [][]       [][]  [][]
+         * 3)
+         *     P(b)                      P(db)
+         *    /    \                   /      \
+         *  N(db)   S(b)            N(b)      S(r)
+         *   /\     /   \     =>   / \       /   \
+         *  [][]   X(b) Y(b)      [] []    X(b)  Y(b)
+         *          /\   /\                 /\    /\
+         *         [][] [][]               [][]  [][]
+         * 4) - terminating case
+         *      P(r)                   P(b)
+         *    /     \                 /    \
+         *  N(db)    S(b)           N(b)    S(r)
+         *   /\      /   \     =>   /\      /   \
+         *  [][]    X(b) Y(b)      [][]    X(b) Y(b)
+         *           /\   /\               /\    /\
+         *          [][] [][]             [][]  [][]
+         * 5)
+         *     P(a)                    P(a)
+         *    /    \                  /    \
+         *  N(db)  S(b)             N(db)   X(b)
+         *   /\    /   \       =>    /\    /  \
+         *  [][]  X(r) Y(b)         [][]  []  S(r)
+         *         /\   /\                    /  \
+         *        [][] [][]                  []  Y(b)
+         *                                        /\
+         *                                       [][]
+         * 6) - terminating case
+         *      P(a)                         S(a)
+         *    /     \                      /     \
+         *   N(db)   S(b)                P(b)    y(b)
+         *   /\     /   \      =>       /  \      /\
+         *  [][]   X(a) Y(r)          N(b) X(a)  [][]
+         *          /\   /\            /\   /\
+         *         [][] [][]          [][] [][]
          */
-        _deleteFixViolations: function(uvnObj) {
-console.log(`---------------- _deleteFixViolations needsFixing:${uvnObj.needsFixing}`)
-            if(!uvnObj.needsFixing) {
-                return
-            }
-console.log(uvnObj)
-console.log(uvnObj.u)
-console.log(uvnObj.u.p)
-            
-            let u = uvnObj.u
-            let v = uvnObj.v
+        _deleteFixViolations: function(node) {
+            let N = node
+            let depth = 0
+            while(N.c == DOUBLE_BLACK && depth < MAX_DEPTH) {
+                if(N.p.t == ROOT) { // case 1
+                    N.c = DOUBLE_BLACK
+                } else {
+                    let P = N.p
+                    let leftCase = P.l.t[0] == N.t[0]
+                    let S = leftCase ? P.r : P.l
+                    let X = S.l
+                    let Y = S.r
+                    let case2RotateFunc = leftCase ? this._rotateLeft : this._rotateRight
+                    let case5RotateFunc = leftCase ? this._rotateRight : this._rotateLeft
+                    let case6RotateFunc = leftCase ? this._rotateLeft : this._rotateRight
+                    let xIsBlackOrNil = S.t == NIL || X.c == BLACK
+                    let yIsBlackOrNil = S.t == NIL || Y.c == BLACK
 
-            //balance tree
-            if(u.c == RED || v.c == RED) {
-                u.c = BLACK
-            } else { // both are black
-                u.c = DOUBLE_BLACK
+                    if(P.c == BLACK && S.c == RED && xIsBlackOrNil && yIsBlackOrNil) { // case 2
+                        case2RotateFunc(P)
+                    } else if(P.c == BLACK && S.c == BLACK && xIsBlackOrNil && yIsBlackOrNil) { // case 3
+                        N.c = BLACK
+                        P.c = DOUBLE_BLACK
+                        S.c = RED
+                        N = P // new N
+                    } else if(P.c == RED && S.c == BLACK && xIsBlackOrNil && yIsBlackOrNil) { // case 4
+                        N.c = BLACK
+                        P.c = BLACK
+                        S.c = RED
+                    } else if(S.c == BLACK && X.c == RED && yIsBlackOrNil) { // case 5
+                        case5RotateFunc(S)
+                        X.c = BLACK
+                        S.c = RED
 
-                let depth = 0
-                while(u.p.t != ROOT && u.c == DOUBLE_BLACK && depth < MAX_DEPTH) {
-                    let uIsLeft = u.p.l.t[0] == u.t[0]
-                    let sibling = uIsLeft ? u.p.r : u.p.l
-                    let sIsLeft = sibling.p.l.t[0] == sibling.t[0]
-                    let parent = u.p
-                    let r = null // will be the red child of sibling
-
-                    if(sibling.c == BLACK && (sibling.l.c == RED || sibling.r.c == RED)) {
-console.log("-------------------------- 1")
-                        r = sibling.l.c == RED ? sibling.l : sibling.r
-                        let rIsLeft = sibling.l.c == RED
-
-                        if(sIsLeft && rIsLeft) { //left left
-                            this._rotateRight(parent)
-                        } else if(sIsLeft && !rIsLeft) { //left right
-                            this._rotateRight(sibling)
-                        } else if(!sIsLeft && !rIsLeft) { //right right
-                            this._rotateLeft(parent)
-                        } else { //right left
-                            this._rotateLeft(sibling)
-                        }
-                        u.c = BLACK
-                        r.c = BLACK
-                    } else if(sibling.c == BLACK && sibling.l.c == BLACK && sibling.r.c == BLACK) {
-console.log("-------------------------- 2")
-                        u.c = BLACK
-                        if(parent.c == RED) {
-                            parent.c = BLACK
-                        } else {
-                            parent.c = DOUBLE_BLACK
-                            u = parent
-                        }
-                    } else if(sibling.c == RED) {
-console.log("-------------------------- 3")
-                        if(sIsLeft) {
-                            this._rotateLeft(u.p)
-                        } else {
-                            this._rotateRight(u.p)
-                        }
-                        u.c = BLACK
-                        u.p.c = BLACK
+                    } else if(Y.c == RED) { // case 6 
+                        case6RotateFunc(P)
+                        N.c = BLACK
+                        S.c = P.c
+                        P.c = BLACK
+                        Y.c = BLACK
+                    } else {
+                        console.error("_deleteFixViolations - unreachable case")
+                        return
                     }
-                    depth++
                 }
-                if(depth == MAX_DEPTH) {
-                    console.warn("_deleteFixViolations - max depth reached")
-                }
+                depth++
             }
-            if(u.p.t == ROOT) { // if we hit the root ensure that it is black
-                u.c = BLACK
+            if(depth == MAX_DEPTH) {
+                console.warn("_deleteFixViolations - max depth reached")
             }
         },
 
@@ -411,6 +435,9 @@ console.log("-------------------------- 3")
          * 4) Every path from root to a nil leaf has the same number of black nodes
          */
         _hasViolations: function() {
+            if(this.root.t == NIL) {
+                return false
+            }
             if(this.root.c != BLACK) {
                 console.warn(`violation - root node is not black it is ${this.root.c}`)
                 return true
@@ -419,8 +446,6 @@ console.log("-------------------------- 3")
             return violationsRecurse(0, this.root, 0)
 
             function violationsRecurse(depth, curr, blackCount) {
-// console.log(`${curr.p.t == ROOT ? "root ==> " : ""} t:${curr.t} c:${curr.c} blackCount:${blackCount} depth:${depth}`)
-// console.log(curr)
                 if(depth == MAX_DEPTH) { // if we hit max recurse depth say the tree is in violation
                     return true 
                 }
@@ -448,7 +473,29 @@ console.log("-------------------------- 3")
                     violationsRecurse(depth+1, curr.r, curr.c == BLACK ? blackCount+1 : blackCount)
 
             }
-        } // _hasViolations
+        }, // _hasViolations
+
+        _debugPrintTree: function() {
+            let out = "_debugPrintTree\n===============\n\n"
+            if(this.root.t == NIL) {
+                out += "The Tree is empty"
+            } else {
+                printRecurse(0, this.root)
+            }
+            console.log(out)
+
+            function printRecurse(depth, curr) {
+                if(depth == MAX_DEPTH) {
+                    console.warn("_debugPrintTree, max depth reached")
+                    return
+                }
+                if(curr.t != NIL) {
+                    out += `   t:${curr.t} c:${curr.c} l.t:${curr.l.t} r.t:${curr.r.t}\n`
+                    printRecurse(depth+1, curr.l)
+                    printRecurse(depth+1, curr.r)
+                }
+            }
+        } // _debugPrintTree
 
     }
 }  // function newRedBlackTree()
