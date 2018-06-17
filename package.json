@@ -13,6 +13,8 @@
     "glob": "^7.1.2"
   },
   "devDependencies": {
-    "jest": "^23.1.0"
+    "chalk": "^2.4.1",
+    "jest": "^23.1.0",
+    "shelljs": "^0.8.2"
   }
 }

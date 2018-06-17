@@ -1,6 +1,9 @@
-var CleanWebpackPlugin = require('clean-webpack-plugin')
+const CleanWebpackPlugin = require('clean-webpack-plugin')
 const glob = require('glob')
-var path = require("path")
+const path = require("path")
+const shelljs = require("shelljs")
+const chalk = require("chalk")
+
 
 module.exports = function(env) {
     var me = [
@@ -71,8 +74,19 @@ module.exports = function(env) {
             },
             plugins: [
                 // extractBundleSass,
-                new CleanWebpackPlugin(["dist"], { root: __dirname, verbose: true, dry: false, exclude: [] })
-            ]
+                new CleanWebpackPlugin(["dist"], { root: __dirname, verbose: true, dry: false, exclude: [] }),
+                // new WebpackShellPlugin({
+                //     onBuildStart:["cd sqlParser; generateJs.sh"]
+                // })
+                {
+                    apply: (compiler) => {
+                        compiler.hooks.beforeRun.tap("CompileSqlParser", (compilation) => {
+                            console.log(chalk.bold.white("\nCompiling the SQL Parser....\n"))
+                            shelljs.cd("sqlParser").exec("./generateJs.sh")
+                        })
+                    }
+                }
+            ],
         }
     ]
     return me
