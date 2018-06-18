@@ -8,6 +8,9 @@ const chalk = require("chalk")
 module.exports = function(env) {
     var me = [
         {
+            node: {
+                fs: "empty"
+            },
             optimization: {
                 minimize: false
             },

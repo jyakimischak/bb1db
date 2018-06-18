@@ -20,12 +20,16 @@ function enableOutput() {
     console.warn = consoleWarn
 }
 
-
 test("Database description", () => {
     let db = bb1db.db.newDatabase()
-    // expect(db.description).toBe("")
-    // db = bb1db.db.newDatabase("My database")
-    // expect(db.description).toBe("My database")
-    // db = bb1db.db.newDatabase({bla:"bla"})
-    // expect(db.description).toBe("")
+    expect(db.description).toBe("")
+    db = bb1db.db.newDatabase("My database")
+    expect(db.description).toBe("My database")
+    db = bb1db.db.newDatabase({bla:"bla"})
+    expect(db.description).toBe("")
+})
+
+test("Create table", () => {
+    db = bb1db.db.newDatabase()
+    db.execute("create table test(one, two)")
 })
