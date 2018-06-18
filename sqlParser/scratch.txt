@@ -1,0 +1,9 @@
+
+
+create table bla (
+    column1 auto,
+    column2
+    column3
+)
+
+

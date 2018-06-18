@@ -1,6 +1,7 @@
 
-grp(PROCEDURE, v2.5.1, "") {
-   sPR1<v2.5.1>(1, 1);
-//   sROL<v2.5.1>(0, *);
-};
+create table test (
+    col1 auto,
+    col2,
+    col3
+)
 
