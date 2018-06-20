@@ -1,4 +1,4 @@
-const bb1db = require("../../dist/bb1db")
+const bb1db = require("../dist/bb1db")
 
 var consoleError = console.error
 var consoleInfo = console.info
@@ -29,7 +29,7 @@ test("Database description", () => {
     expect(db.description).toBe("")
 })
 
-test("Create table", () => {
-    db = bb1db.db.newDatabase()
-    db.execute("create table test(one, two)")
-})
+// test("Create table", () => {
+//     db = bb1db.db.newDatabase()
+//     db.execute("create table test(one, two)")
+// })
