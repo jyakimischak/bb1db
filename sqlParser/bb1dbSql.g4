@@ -16,11 +16,47 @@ prog        :
 Create table
 ************************/
 cTab		:
-                CREATE_KW TABLE_KW IDENTIFIER '('
-				IDENTIFIER AUTO_KW?
-                (',' IDENTIFIER)*
+                CREATE_KW TABLE_KW tableName '('
+				columnName AUTO_KW?
+                (',' columnName)*
                 ')'
             ;
+
+/************************
+Drop table
+************************/
+dTab		:
+                DROP_KW TABLE_KW tableName
+            ;
+
+/************************
+Alter table
+************************/
+aTab		:
+                ALTER_KW TABLE_KW tableName aTabColumn
+            ;
+
+/************************
+Alter table, add or drop column
+************************/
+aTabColumn :
+				(
+					ADD_KW columnName (',' columnName)*
+					|
+					DROP_KW columnName (',' columnName)*
+				)
+		   ;
+
+
+
+
+tableName  :
+				IDENTIFIER
+           ;
+
+columnName :
+				IDENTIFIER
+           ;
 
 
 /*********************************************************************************************************************
@@ -45,6 +81,15 @@ TABLE_KW    :   'table'
             ;
 
 AUTO_KW     :   'auto'
+            ;
+
+DROP_KW     :   'drop'
+            ;
+
+ALTER_KW    :   'alter'
+            ;
+
+ADD_KW      :   'add'
             ;
 
 IDENTIFIER	:

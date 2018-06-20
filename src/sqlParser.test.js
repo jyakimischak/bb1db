@@ -20,8 +20,8 @@ function enableOutput() {
     console.warn = consoleWarn
 }
 
-test("SayHi", () => {
-    bb1db.sqlParser.parse("create table test(one, two)")
+test("Create table 1 column no auto", () => {
+    bb1db.sqlParser.parse("create table nightnight(one)")
 })
 
 
