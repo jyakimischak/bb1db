@@ -5,6 +5,7 @@
 
 const rbt = require("./redBlackTree.js")
 const sqlParser = require("./sqlParser.js")
+const sqlStatement = require("./sqlStatement.js")
 
 /**
  * Return a new database object with an optional description.
@@ -14,40 +15,49 @@ export function newDatabase(description) {
 
     return {
         description: dbDesc,
-        tables: {},
+        _tables: {},
 
         execute: function(sql) {
-            console.log(sql)
-//             var chars = new antlr4.InputStream(sql)
-//             var lexer = new sqlLexer.bb1dbSqlLexer(chars)
-//             var tokens  = new antlr4.CommonTokenStream(lexer)
-//             // var listener = new bb1dbSqlListener.bb1dbSqlListener()
-// // console.log(listener)
+            let parseError = sqlParser.parse(sql)
+            if(parseError) {
+                console.error(`Parse error in - ${sql}`)
+                return this
+            }
+            let stmt = sqlParser.getStmt()
 
+            switch(stmt.statementType) {
+                case sqlStatement.STATEMENT_TYPE.CREATE_TABLE:
+                    this._createTable(stmt)
+                    break;
+                case sqlStatement.STATEMENT_TYPE.DROP_TABLE:
+                    break;
+                case sqlStatement.STATEMENT_TYPE.ALTER_TABLE:
+                    break;
+                case sqlStatement.STATEMENT_TYPE.NONE: // this should never really happen, should be caught by the parse error above
+                default:
+                    console.error(`unknown SQL statement - ${sql}`)
+            }
+            return this
+        }, // execute
 
-// console.log(bb1dbSqlListener)
-
-
-//             var parser = new sqlParser.bb1dbSqlParser(tokens)
-// // console.log(parser.prog)
-// var tree = parser.prog()
-// // console.log(tree)
-
-// // console.log(sqlListener.bb1dbSqlListener.call(this))
-
-
-// var bla = new SqlPrinter()
-// antlr4.tree.ParseTreeWalker.DEFAULT.walk(bla, tree);
-
-//             // parser.buildParseTrees = true
-//             // parser.addListener("sdf")
-//             // parser
-            
-// // console.log(parser)
-
-
-//             // var tree = parser.elements()
-//             // console.log("Parsed: "+ tree)            
+        /**
+         * Create a table and add it to this.tables.
+         */
+        _createTable: function(stmt) {
+            if(this._tables[stmt.tableName] != undefined) {
+                console.warn(`Table ${stmt.tableName} already exists`)
+                return
+            }
+            let table = {}
+            table.tableName = stmt.tableName
+            table.isAutoPk = stmt.isAutoPk
+            if(stmt.isAutoPk) {
+                //seed the pk sequence to 1 for the table
+                table.pkSequence = 1
+            }
+            table.rows = rbt.newRedBlackTree()
+            table.columns = stmt.columns
+            this._tables[stmt.tableName] = table
         }
     }
 }

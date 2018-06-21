@@ -1,20 +1,11 @@
 
-// var rbt = 
-var db = require("./database.js")
-// // db.linkRbt(rbt)
-// const antlr4 = require("../node_modules/antlr4/index.js")
-// db.linkAntlr4(antlr4)
-// const sqlLexer = require("../sqlParser/outJs/bb1dbSqlLexer.js")
-// db.linkSqlLexer(sqlLexer)
-// const sqlParser = require("../sqlParser/outJs/bb1dbSqlParser.js")
-// db.linkSqlParser(sqlParser)
-// const sqlListener = require("../sqlParser/outJs/bb1dbSqlListener.js")
-// db.linksqlListener(sqlListener)
+const db = require("./database.js")
 
 module.exports = {
-    rbt: require("./redBlackTree.js"),
-    sqlParser: require("./sqlParser.js"),
-    db: db,
+    _rbt: require("./redBlackTree.js"),
+    _sqlParser: require("./sqlParser.js"),
+    _sqlStatement: require("./sqlStatement.js"),
+    _db: db,
     newDatabase: db.newDatabase
 }
 

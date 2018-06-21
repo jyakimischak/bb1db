@@ -7,88 +7,80 @@ const antlr4 = require("../node_modules/antlr4/index.js")
 const bb1dbSqlLexer = require("../sqlParser/outJs/bb1dbSqlLexer.js")
 const bb1dbSqlParser = require("../sqlParser/outJs/bb1dbSqlParser.js")
 const bb1dbSqlListener = require("../sqlParser/outJs/bb1dbSqlListener.js")
+const sqlStatement = require("./sqlStatement.js")
 
+var stmt = {}
 
-var inCTab = false;
-var cTabData = {}
+var parseError = false
 
-
-var SqlActionCreator = function() {
+var SqlStatementCreator = function() {
     bb1dbSqlListener.bb1dbSqlListener.call(this)
     return this
 }
-SqlActionCreator.prototype = Object.create(bb1dbSqlListener.bb1dbSqlListener.prototype)
-SqlActionCreator.prototype.constructor = SqlActionCreator
-SqlActionCreator.prototype.enterProg = function(ctx) {
+SqlStatementCreator.prototype = Object.create(bb1dbSqlListener.bb1dbSqlListener.prototype)
+SqlStatementCreator.prototype.constructor = SqlStatementCreator
+SqlStatementCreator.prototype.enterProg = function(ctx) {
+    stmt = sqlStatement.newStatement()
 }
-SqlActionCreator.prototype.exitProg = function(ctx) {
+SqlStatementCreator.prototype.exitProg = function(ctx) {
 }
-SqlActionCreator.prototype.enterCTab = function(ctx) {
-    inCTab = true
-    cTabData = {
-        tableName: "",
-        auto: false,
-        columns: []
-    }
-    cTabData.auto = ctx.AUTO_KW() != undefined
+SqlStatementCreator.prototype.enterCTab = function(ctx) {
+    stmt.createTable(ctx.AUTO_KW() != undefined)
 }
-SqlActionCreator.prototype.exitCTab = function(ctx) {
-    inCTab = false
-    console.log(cTabData)
+SqlStatementCreator.prototype.exitCTab = function(ctx) {
 }
-SqlActionCreator.prototype.enterDTab = function(ctx) {
+SqlStatementCreator.prototype.enterDTab = function(ctx) {
 }
-SqlActionCreator.prototype.exitDTab = function(ctx) {
+SqlStatementCreator.prototype.exitDTab = function(ctx) {
 }
-SqlActionCreator.prototype.enterATab = function(ctx) {
+SqlStatementCreator.prototype.enterATab = function(ctx) {
 }
-SqlActionCreator.prototype.exitATab = function(ctx) {
+SqlStatementCreator.prototype.exitATab = function(ctx) {
 }
-SqlActionCreator.prototype.enterATabColumn = function(ctx) {
+SqlStatementCreator.prototype.enterATabColumn = function(ctx) {
 }
-SqlActionCreator.prototype.exitATabColumn = function(ctx) {
+SqlStatementCreator.prototype.exitATabColumn = function(ctx) {
 }
-SqlActionCreator.prototype.enterTableName = function(ctx) {
-    if(inCTab) {
-        cTabData.tableName = ctx.IDENTIFIER().getText()
-    }
+SqlStatementCreator.prototype.enterTableName = function(ctx) {
+    stmt.setTableName(ctx.IDENTIFIER().getText())
 }
-SqlActionCreator.prototype.exitTableName = function(ctx) {
+SqlStatementCreator.prototype.exitTableName = function(ctx) {
 }
-SqlActionCreator.prototype.enterColumnName = function(ctx) {
-    if(inCTab) {
-        cTabData.columns.push(ctx.IDENTIFIER().getText())
-    }
+SqlStatementCreator.prototype.enterColumnName = function(ctx) {
+    stmt.addColumn(ctx.IDENTIFIER().getText())
 }
-SqlActionCreator.prototype.exitColumnName = function(ctx) {
+SqlStatementCreator.prototype.exitColumnName = function(ctx) {
 }
 
 
-
-
-// SqlActionCreator.prototype.exitCTab = function(ctx) {      
-// //   console.log(ctx)
-// //   console.log(ctx.children[3].symbol)
-
-
-//     console.log(ctx.CREATE_KW().getText())
-//     console.log(ctx.TABLE_KW().getText())
-//     console.log(ctx.IDENTIFIER(0).getText())
-//     console.log(ctx.IDENTIFIER(1).getText())
-//     // console.log(ctx.AUTO_KW().getText())
-
-
-// }
-
+var ErrorListener = function(errors) {
+    antlr4.error.ErrorListener.call(this)
+    this.errors = errors
+    return this
+} 
+ErrorListener.prototype = Object.create(antlr4.error.ErrorListener.prototype)
+ErrorListener.prototype.constructor = ErrorListener
+ErrorListener.prototype.syntaxError = function(rec, sym, line, col, msg, e) {
+    parseError = true
+}
 
 export function parse(sql) {
+    parseError = false
     var chars = new antlr4.InputStream(sql)
     var lexer = new bb1dbSqlLexer.bb1dbSqlLexer(chars)
     var tokens  = new antlr4.CommonTokenStream(lexer)
     var parser = new bb1dbSqlParser.bb1dbSqlParser(tokens)
+    var errorListener = new ErrorListener()
+    parser.addErrorListener(errorListener)
     var tree = parser.prog()
-    var sqlActionCreator = new SqlActionCreator()
-    antlr4.tree.ParseTreeWalker.DEFAULT.walk(sqlActionCreator, tree)
+    if(!parseError) {
+        var sqlStatementCreator = new SqlStatementCreator()
+        antlr4.tree.ParseTreeWalker.DEFAULT.walk(sqlStatementCreator, tree)
+    }
+    return parseError
 }
 
 
+export function getStmt() {
+    return stmt
+}

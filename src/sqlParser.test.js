@@ -21,7 +21,33 @@ function enableOutput() {
 }
 
 test("Create table 1 column no auto", () => {
-    bb1db.sqlParser.parse("create table nightnight(one)")
+    bb1db._sqlParser.parse("create table myTable(one)")
+    var stmt = bb1db._sqlParser.getStmt()
+    expect(stmt.statementType).toBe(bb1db._sqlStatement.STATEMENT_TYPE.CREATE_TABLE)
+    expect(stmt.tableName).toBe("myTable")
+    expect(stmt.isAutoPk).toBe(false)
+    expect(stmt.columns.length).toBe(1)
+    expect(stmt.columns[0]).toBe("one")
 })
 
+test("Create table 1 column auto", () => {
+    bb1db._sqlParser.parse("create table myTable(one auto)")
+    var stmt = bb1db._sqlParser.getStmt()
+    expect(stmt.statementType).toBe(bb1db._sqlStatement.STATEMENT_TYPE.CREATE_TABLE)
+    expect(stmt.tableName).toBe("myTable")
+    expect(stmt.isAutoPk).toBe(true)
+    expect(stmt.columns.length).toBe(1)
+    expect(stmt.columns[0]).toBe("one")
+})
 
+test("Create table 3 columns auto", () => {
+    bb1db._sqlParser.parse("create table myTable(one auto, two, three)")
+    var stmt = bb1db._sqlParser.getStmt()
+    expect(stmt.statementType).toBe(bb1db._sqlStatement.STATEMENT_TYPE.CREATE_TABLE)
+    expect(stmt.tableName).toBe("myTable")
+    expect(stmt.isAutoPk).toBe(true)
+    expect(stmt.columns.length).toBe(3)
+    expect(stmt.columns[0]).toBe("one")
+    expect(stmt.columns[1]).toBe("two")
+    expect(stmt.columns[2]).toBe("three")
+})

@@ -21,15 +21,37 @@ function enableOutput() {
 }
 
 test("Database description", () => {
-    let db = bb1db.db.newDatabase()
+    let db = bb1db._db.newDatabase()
     expect(db.description).toBe("")
-    db = bb1db.db.newDatabase("My database")
+    db = bb1db._db.newDatabase("My database")
     expect(db.description).toBe("My database")
-    db = bb1db.db.newDatabase({bla:"bla"})
+    db = bb1db._db.newDatabase({bla:"bla"})
     expect(db.description).toBe("")
 })
 
-// test("Create table", () => {
-//     db = bb1db.db.newDatabase()
-//     db.execute("create table test(one, two)")
-// })
+test("Bad SQL", () => {
+    disableOutput()
+    let db = bb1db._db.newDatabase()
+    db.execute("This is not SQL")
+    expect(Object.keys(db._tables).length).toBe(0)
+    enableOutput()
+})
+
+
+test("Create table 1 column no auto", () => {
+    let db = bb1db._db.newDatabase()
+    db.execute("create table test(one)")
+    expect(db._tables.test.tableName).toBe("test")
+    expect(db._tables.test.pkSequence).toBe(undefined)
+    expect(db._tables.test.columns[0]).toBe("one")
+})
+
+test("Create table 3 columns auto", () => {
+    let db = bb1db._db.newDatabase()
+    db.execute("create table test(one auto, two, three)")
+    expect(db._tables.test.tableName).toBe("test")
+    expect(db._tables.test.pkSequence).toBe(1)
+    expect(db._tables.test.columns[0]).toBe("one")
+    expect(db._tables.test.columns[1]).toBe("two")
+    expect(db._tables.test.columns[2]).toBe("three")
+})
