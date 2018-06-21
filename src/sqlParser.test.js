@@ -58,3 +58,41 @@ test("Drop a table", () => {
     expect(stmt.statementType).toBe(bb1db._sqlStatement.STATEMENT_TYPE.DROP_TABLE)
     expect(stmt.tableName).toBe("myTable")
 })
+
+test("Alter a table add 1 column", () => {
+    bb1db._sqlParser.parse("alter table myTable add one")
+    var stmt = bb1db._sqlParser.getStmt()
+    expect(stmt.statementType).toBe(bb1db._sqlStatement.STATEMENT_TYPE.ALTER_TABLE)
+    expect(stmt.tableName).toBe("myTable")
+    expect(stmt.isAddColumn).toBe(true)
+    expect(stmt.columns[0]).toBe("one")
+})
+
+test("Alter a table add 2 columns", () => {
+    bb1db._sqlParser.parse("alter table myTable add one, two")
+    var stmt = bb1db._sqlParser.getStmt()
+    expect(stmt.statementType).toBe(bb1db._sqlStatement.STATEMENT_TYPE.ALTER_TABLE)
+    expect(stmt.tableName).toBe("myTable")
+    expect(stmt.isAddColumn).toBe(true)
+    expect(stmt.columns[0]).toBe("one")
+    expect(stmt.columns[1]).toBe("two")
+})
+
+test("Alter a table drop 1 column", () => {
+    bb1db._sqlParser.parse("alter table myTable drop one")
+    var stmt = bb1db._sqlParser.getStmt()
+    expect(stmt.statementType).toBe(bb1db._sqlStatement.STATEMENT_TYPE.ALTER_TABLE)
+    expect(stmt.tableName).toBe("myTable")
+    expect(stmt.isAddColumn).toBe(false)
+    expect(stmt.columns[0]).toBe("one")
+})
+
+test("Alter a table drop 2 columns", () => {
+    bb1db._sqlParser.parse("alter table myTable drop one, two")
+    var stmt = bb1db._sqlParser.getStmt()
+    expect(stmt.statementType).toBe(bb1db._sqlStatement.STATEMENT_TYPE.ALTER_TABLE)
+    expect(stmt.tableName).toBe("myTable")
+    expect(stmt.isAddColumn).toBe(false)
+    expect(stmt.columns[0]).toBe("one")
+    expect(stmt.columns[1]).toBe("two")
+})

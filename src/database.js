@@ -33,7 +33,8 @@ export function newDatabase(description) {
                     this._dropTable(stmt)
                     break;
                 case sqlStatement.STATEMENT_TYPE.ALTER_TABLE:
-                    break;
+                this._alterTable(stmt)
+                break;
                 case sqlStatement.STATEMENT_TYPE.NONE: // this should never really happen, should be caught by the parse error above
                 default:
                     console.error(`unknown SQL statement - ${sql}`)
@@ -59,6 +60,7 @@ export function newDatabase(description) {
             table.rows = rbt.newRedBlackTree()
             table.columns = stmt.columns
             this._tables[stmt.tableName] = table
+            console.info(`Created table ${stmt.tableName}`)
         }, // _createTable
 
         /**
@@ -70,7 +72,48 @@ export function newDatabase(description) {
                 return
             }
             delete this._tables[stmt.tableName]
-        }
+            console.info(`Dropped table ${stmt.tableName}`)
+        }, // _dropTable
+
+        /**
+         * Either add or drop columns from a table
+         */
+        _alterTable: function(stmt) {
+            if(this._tables[stmt.tableName] == undefined) {
+                console.warn(`Table ${stmt.tableName} does not exist`)
+                return
+            }
+            let table = this._tables[stmt.tableName]
+            let columnsAltered = 0
+            if(stmt.isAddColumn) { // adding columns
+                stmt.columns.forEach(col => {
+                    if(table.columns.includes(col)) {
+                        console.warn(`Column ${table.tableName}.${col} already exists.`)
+                    } else {
+                        table.columns.push(col)
+                        columnsAltered++
+                        //TODO, add columns to tuple values in rbt
+                    }
+                })
+                console.info(`Altered table ${table.tableName}, ${columnsAltered} column(s) added`)
+            } else { // dropping columns
+                stmt.columns.forEach(col => {
+                    let colI = table.columns.findIndex(e => e == col)
+                    if(colI == -1) {
+                        console.warn(`Column ${table.tableName}.${col} does not exist.`)
+                    } else {
+                        if(colI == 0) {
+                            console.warn(`Column ${table.tableName}.${col} cannot be dropped, it is the PK.`)
+                        } else {
+                            table.columns.pop(colI)
+                            columnsAltered++
+                            //TODO, remove columns from tuple values in rbt
+                        }
+                    }
+                })
+                console.info(`Altered table ${table.tableName}, ${columnsAltered} column(s) dropped`)
+            }
+        } // _alterTable
     }
 }
 

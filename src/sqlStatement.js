@@ -31,11 +31,14 @@ export function newStatement() {
         /**
          * Setup an alter table, are the columns add or drop (only 1 or the other is allowed per statement).
          */
-        alterTable: function(isAddColumn) {
+        alterTable: function() {
             this.statementType = STATEMENT_TYPE.ALTER_TABLE
             this.tableName = ""
-            this.isAddColumn = isAddColumn
             this.columns = []
+        },
+
+        alterTableIsAddColumn: function(isAddColumn) {
+            this.isAddColumn = isAddColumn
         },
 
         setTableName: function(tableName) {

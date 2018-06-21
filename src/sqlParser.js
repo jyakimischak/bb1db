@@ -35,10 +35,12 @@ SqlStatementCreator.prototype.enterDTab = function(ctx) {
 SqlStatementCreator.prototype.exitDTab = function(ctx) {
 }
 SqlStatementCreator.prototype.enterATab = function(ctx) {
+    stmt.alterTable()
 }
 SqlStatementCreator.prototype.exitATab = function(ctx) {
 }
 SqlStatementCreator.prototype.enterATabColumn = function(ctx) {
+    stmt.alterTableIsAddColumn(ctx.ADD_KW() != undefined)
 }
 SqlStatementCreator.prototype.exitATabColumn = function(ctx) {
 }
