@@ -88,6 +88,12 @@ public class bb1dbSqlParser extends Parser {
 		public CTabContext cTab() {
 			return getRuleContext(CTabContext.class,0);
 		}
+		public DTabContext dTab() {
+			return getRuleContext(DTabContext.class,0);
+		}
+		public ATabContext aTab() {
+			return getRuleContext(ATabContext.class,0);
+		}
 		public ProgContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
@@ -100,9 +106,29 @@ public class bb1dbSqlParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			{
-			setState(14);
-			cTab();
+			setState(17);
+			_errHandler.sync(this);
+			switch (_input.LA(1)) {
+			case CREATE_KW:
+				{
+				setState(14);
+				cTab();
+				}
+				break;
+			case DROP_KW:
+				{
+				setState(15);
+				dTab();
+				}
+				break;
+			case ALTER_KW:
+				{
+				setState(16);
+				aTab();
+				}
+				break;
+			default:
+				throw new NoViableAltException(this);
 			}
 			}
 		}
@@ -143,43 +169,43 @@ public class bb1dbSqlParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(16);
-			match(CREATE_KW);
-			setState(17);
-			match(TABLE_KW);
-			setState(18);
-			tableName();
 			setState(19);
-			match(T__0);
+			match(CREATE_KW);
 			setState(20);
-			columnName();
+			match(TABLE_KW);
+			setState(21);
+			tableName();
 			setState(22);
+			match(T__0);
+			setState(23);
+			columnName();
+			setState(25);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==AUTO_KW) {
 				{
-				setState(21);
+				setState(24);
 				match(AUTO_KW);
 				}
 			}
 
-			setState(28);
+			setState(31);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			while (_la==T__1) {
 				{
 				{
-				setState(24);
+				setState(27);
 				match(T__1);
-				setState(25);
+				setState(28);
 				columnName();
 				}
 				}
-				setState(30);
+				setState(33);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
-			setState(31);
+			setState(34);
 			match(T__2);
 			}
 		}
@@ -212,11 +238,11 @@ public class bb1dbSqlParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(33);
+			setState(36);
 			match(DROP_KW);
-			setState(34);
+			setState(37);
 			match(TABLE_KW);
-			setState(35);
+			setState(38);
 			tableName();
 			}
 		}
@@ -252,13 +278,13 @@ public class bb1dbSqlParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(37);
-			match(ALTER_KW);
-			setState(38);
-			match(TABLE_KW);
-			setState(39);
-			tableName();
 			setState(40);
+			match(ALTER_KW);
+			setState(41);
+			match(TABLE_KW);
+			setState(42);
+			tableName();
+			setState(43);
 			aTabColumn();
 			}
 		}
@@ -295,28 +321,28 @@ public class bb1dbSqlParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(60);
+			setState(63);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case ADD_KW:
 				{
-				setState(42);
+				setState(45);
 				match(ADD_KW);
-				setState(43);
+				setState(46);
 				columnName();
-				setState(48);
+				setState(51);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 				while (_la==T__1) {
 					{
 					{
-					setState(44);
+					setState(47);
 					match(T__1);
-					setState(45);
+					setState(48);
 					columnName();
 					}
 					}
-					setState(50);
+					setState(53);
 					_errHandler.sync(this);
 					_la = _input.LA(1);
 				}
@@ -324,23 +350,23 @@ public class bb1dbSqlParser extends Parser {
 				break;
 			case DROP_KW:
 				{
-				setState(51);
+				setState(54);
 				match(DROP_KW);
-				setState(52);
+				setState(55);
 				columnName();
-				setState(57);
+				setState(60);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 				while (_la==T__1) {
 					{
 					{
-					setState(53);
+					setState(56);
 					match(T__1);
-					setState(54);
+					setState(57);
 					columnName();
 					}
 					}
-					setState(59);
+					setState(62);
 					_errHandler.sync(this);
 					_la = _input.LA(1);
 				}
@@ -376,7 +402,7 @@ public class bb1dbSqlParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(62);
+			setState(65);
 			match(IDENTIFIER);
 			}
 		}
@@ -405,7 +431,7 @@ public class bb1dbSqlParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(64);
+			setState(67);
 			match(IDENTIFIER);
 			}
 		}
@@ -421,23 +447,24 @@ public class bb1dbSqlParser extends Parser {
 	}
 
 	public static final String _serializedATN =
-		"\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3\20E\4\2\t\2\4\3\t"+
-		"\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7\4\b\t\b\3\2\3\2\3\3\3\3\3\3\3\3\3\3"+
-		"\3\3\5\3\31\n\3\3\3\3\3\7\3\35\n\3\f\3\16\3 \13\3\3\3\3\3\3\4\3\4\3\4"+
-		"\3\4\3\5\3\5\3\5\3\5\3\5\3\6\3\6\3\6\3\6\7\6\61\n\6\f\6\16\6\64\13\6\3"+
-		"\6\3\6\3\6\3\6\7\6:\n\6\f\6\16\6=\13\6\5\6?\n\6\3\7\3\7\3\b\3\b\3\b\2"+
-		"\2\t\2\4\6\b\n\f\16\2\2\2B\2\20\3\2\2\2\4\22\3\2\2\2\6#\3\2\2\2\b\'\3"+
-		"\2\2\2\n>\3\2\2\2\f@\3\2\2\2\16B\3\2\2\2\20\21\5\4\3\2\21\3\3\2\2\2\22"+
-		"\23\7\b\2\2\23\24\7\t\2\2\24\25\5\f\7\2\25\26\7\3\2\2\26\30\5\16\b\2\27"+
-		"\31\7\n\2\2\30\27\3\2\2\2\30\31\3\2\2\2\31\36\3\2\2\2\32\33\7\4\2\2\33"+
-		"\35\5\16\b\2\34\32\3\2\2\2\35 \3\2\2\2\36\34\3\2\2\2\36\37\3\2\2\2\37"+
-		"!\3\2\2\2 \36\3\2\2\2!\"\7\5\2\2\"\5\3\2\2\2#$\7\13\2\2$%\7\t\2\2%&\5"+
-		"\f\7\2&\7\3\2\2\2\'(\7\f\2\2()\7\t\2\2)*\5\f\7\2*+\5\n\6\2+\t\3\2\2\2"+
-		",-\7\r\2\2-\62\5\16\b\2./\7\4\2\2/\61\5\16\b\2\60.\3\2\2\2\61\64\3\2\2"+
-		"\2\62\60\3\2\2\2\62\63\3\2\2\2\63?\3\2\2\2\64\62\3\2\2\2\65\66\7\13\2"+
-		"\2\66;\5\16\b\2\678\7\4\2\28:\5\16\b\29\67\3\2\2\2:=\3\2\2\2;9\3\2\2\2"+
-		";<\3\2\2\2<?\3\2\2\2=;\3\2\2\2>,\3\2\2\2>\65\3\2\2\2?\13\3\2\2\2@A\7\16"+
-		"\2\2A\r\3\2\2\2BC\7\16\2\2C\17\3\2\2\2\7\30\36\62;>";
+		"\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3\20H\4\2\t\2\4\3\t"+
+		"\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7\4\b\t\b\3\2\3\2\3\2\5\2\24\n\2\3\3"+
+		"\3\3\3\3\3\3\3\3\3\3\5\3\34\n\3\3\3\3\3\7\3 \n\3\f\3\16\3#\13\3\3\3\3"+
+		"\3\3\4\3\4\3\4\3\4\3\5\3\5\3\5\3\5\3\5\3\6\3\6\3\6\3\6\7\6\64\n\6\f\6"+
+		"\16\6\67\13\6\3\6\3\6\3\6\3\6\7\6=\n\6\f\6\16\6@\13\6\5\6B\n\6\3\7\3\7"+
+		"\3\b\3\b\3\b\2\2\t\2\4\6\b\n\f\16\2\2\2G\2\23\3\2\2\2\4\25\3\2\2\2\6&"+
+		"\3\2\2\2\b*\3\2\2\2\nA\3\2\2\2\fC\3\2\2\2\16E\3\2\2\2\20\24\5\4\3\2\21"+
+		"\24\5\6\4\2\22\24\5\b\5\2\23\20\3\2\2\2\23\21\3\2\2\2\23\22\3\2\2\2\24"+
+		"\3\3\2\2\2\25\26\7\b\2\2\26\27\7\t\2\2\27\30\5\f\7\2\30\31\7\3\2\2\31"+
+		"\33\5\16\b\2\32\34\7\n\2\2\33\32\3\2\2\2\33\34\3\2\2\2\34!\3\2\2\2\35"+
+		"\36\7\4\2\2\36 \5\16\b\2\37\35\3\2\2\2 #\3\2\2\2!\37\3\2\2\2!\"\3\2\2"+
+		"\2\"$\3\2\2\2#!\3\2\2\2$%\7\5\2\2%\5\3\2\2\2&\'\7\13\2\2\'(\7\t\2\2()"+
+		"\5\f\7\2)\7\3\2\2\2*+\7\f\2\2+,\7\t\2\2,-\5\f\7\2-.\5\n\6\2.\t\3\2\2\2"+
+		"/\60\7\r\2\2\60\65\5\16\b\2\61\62\7\4\2\2\62\64\5\16\b\2\63\61\3\2\2\2"+
+		"\64\67\3\2\2\2\65\63\3\2\2\2\65\66\3\2\2\2\66B\3\2\2\2\67\65\3\2\2\28"+
+		"9\7\13\2\29>\5\16\b\2:;\7\4\2\2;=\5\16\b\2<:\3\2\2\2=@\3\2\2\2><\3\2\2"+
+		"\2>?\3\2\2\2?B\3\2\2\2@>\3\2\2\2A/\3\2\2\2A8\3\2\2\2B\13\3\2\2\2CD\7\16"+
+		"\2\2D\r\3\2\2\2EF\7\16\2\2F\17\3\2\2\2\b\23\33!\65>A";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());
 	static {

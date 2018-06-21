@@ -9,7 +9,9 @@ Parser rules
 Entry point rule for all programs.
 ************************/
 prog        :
-                (cTab)
+                (
+					cTab|dTab|aTab
+				)
             ;
 
 /************************

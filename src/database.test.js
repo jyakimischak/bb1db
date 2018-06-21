@@ -37,7 +37,6 @@ test("Bad SQL", () => {
     enableOutput()
 })
 
-
 test("Create table 1 column no auto", () => {
     let db = bb1db._db.newDatabase()
     db.execute("create table test(one)")
@@ -55,3 +54,11 @@ test("Create table 3 columns auto", () => {
     expect(db._tables.test.columns[1]).toBe("two")
     expect(db._tables.test.columns[2]).toBe("three")
 })
+
+test("Create table then drop it", () => {
+    let db = bb1db._db.newDatabase()
+    db.execute("create table test(one)")
+        .execute("drop table test")
+    expect(Object.keys(db._tables).length).toBe(0)
+})
+

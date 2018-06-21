@@ -51,3 +51,10 @@ test("Create table 3 columns auto", () => {
     expect(stmt.columns[1]).toBe("two")
     expect(stmt.columns[2]).toBe("three")
 })
+
+test("Drop a table", () => {
+    bb1db._sqlParser.parse("drop table myTable")
+    var stmt = bb1db._sqlParser.getStmt()
+    expect(stmt.statementType).toBe(bb1db._sqlStatement.STATEMENT_TYPE.DROP_TABLE)
+    expect(stmt.tableName).toBe("myTable")
+})

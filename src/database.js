@@ -30,6 +30,7 @@ export function newDatabase(description) {
                     this._createTable(stmt)
                     break;
                 case sqlStatement.STATEMENT_TYPE.DROP_TABLE:
+                    this._dropTable(stmt)
                     break;
                 case sqlStatement.STATEMENT_TYPE.ALTER_TABLE:
                     break;
@@ -41,7 +42,7 @@ export function newDatabase(description) {
         }, // execute
 
         /**
-         * Create a table and add it to this.tables.
+         * Create a table and add it to this._tables
          */
         _createTable: function(stmt) {
             if(this._tables[stmt.tableName] != undefined) {
@@ -58,6 +59,17 @@ export function newDatabase(description) {
             table.rows = rbt.newRedBlackTree()
             table.columns = stmt.columns
             this._tables[stmt.tableName] = table
+        }, // _createTable
+
+        /**
+         * remove the given table from this._tables
+         */
+        _dropTable: function(stmt) {
+            if(this._tables[stmt.tableName] == undefined) {
+                console.warn(`Table ${stmt.tableName} does not exist`)
+                return
+            }
+            delete this._tables[stmt.tableName]
         }
     }
 }

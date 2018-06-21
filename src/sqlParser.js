@@ -30,6 +30,7 @@ SqlStatementCreator.prototype.enterCTab = function(ctx) {
 SqlStatementCreator.prototype.exitCTab = function(ctx) {
 }
 SqlStatementCreator.prototype.enterDTab = function(ctx) {
+    stmt.dropTable()
 }
 SqlStatementCreator.prototype.exitDTab = function(ctx) {
 }
@@ -64,6 +65,10 @@ ErrorListener.prototype.syntaxError = function(rec, sym, line, col, msg, e) {
     parseError = true
 }
 
+/**
+ * Parse the given sql and put the resulting statement object in stmt.
+ * Will return true if the sql was successfully parsed.
+ */
 export function parse(sql) {
     parseError = false
     var chars = new antlr4.InputStream(sql)
@@ -80,7 +85,9 @@ export function parse(sql) {
     return parseError
 }
 
-
+/**
+ * Return the stmt object that was created during the call to parse.
+ */
 export function getStmt() {
     return stmt
 }
