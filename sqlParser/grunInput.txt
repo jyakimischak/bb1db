@@ -1,7 +1,2 @@
 
-create table test (
-    col1 auto,
-    col2,
-    col3
-)
-
+insert into myTable(col2, col3) values ('sdf', 1.0)
