@@ -1,2 +1,11 @@
 
-insert into myTable(col2, col3) values ('sd''f', 1.0)
+select myTable.col1, otherTable.col3
+from myTable
+inner join table2 on myTable.col1 = table2.col1 and table2.othercol = 'stuff'
+--left join bob on table2.stuff = bob.pk
+where myTable.col1 > 27
+and (
+    myTable.col1 = 10
+    or
+    col5 <> 'this'
+)
