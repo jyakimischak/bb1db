@@ -25,21 +25,23 @@ test("newrbt Created", () => {
 })
 
 test("_insert non-array", () => {
-    expect(() => {
-        bb1db._rbt.newRedBlackTree()._insert(10)
-    }).toThrow()
+    disableOutput()
+    expect(bb1db._rbt.newRedBlackTree()._insert(10)).toBe(undefined)
+    enableOutput()
 })
 
 test("_insert with no 0th element", () => {
-    expect(() => {
-        bb1db._rbt.newRedBlackTree()._insert([])
-    }).toThrow()
+    disableOutput()
+    expect(bb1db._rbt.newRedBlackTree()._insert([])).toBe(undefined)
+    enableOutput()
 })
 
 test("_insert duplicate 0th element", () => {
-    expect(() => {
-        bb1db._rbt.newRedBlackTree()._insert([10])._insert([10])
-    }).toThrow()
+    disableOutput()
+    let tree = bb1db._rbt.newRedBlackTree()
+    tree._insert([10])
+    expect(tree._insert([10])).toBe(undefined)
+    enableOutput()
 })
 
 test("_insert into an empty tree", () => {
@@ -538,6 +540,7 @@ function getRandomInt(min, max) {
 }
 
 test("_insertFixViolations 1000 random inserts", () => {
+    disableOutput()
     let tree = bb1db._rbt.newRedBlackTree()
     let min = -100000
     let max = 100000
@@ -546,6 +549,7 @@ test("_insertFixViolations 1000 random inserts", () => {
         tree._insertFixViolations(tree._insert([getRandomInt(min, max)]))
     }
     expect(tree._hasViolations()).toBe(false)
+    enableOutput()
 })
 
 test("_delete root", () => {
@@ -680,3 +684,15 @@ test("_deleteFixViolations 100 random inserts, delete 5, 10 times", () => {
     }
 })
 
+test("add valid", () => {
+    let tree = bb1db._rbt.newRedBlackTree()
+    expect(tree.add([123, 456, "test"])).toBe(123)
+})
+
+test("add invalid", () => {
+    disableOutput()
+    let tree = bb1db._rbt.newRedBlackTree()
+    tree.add([123, 456, "test"])
+    expect(tree.add([123, 4567, "test2"])).toBe(undefined)
+    enableOutput()
+})

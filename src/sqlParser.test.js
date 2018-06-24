@@ -96,3 +96,48 @@ test("Alter a table drop 2 columns", () => {
     expect(stmt.columns[0]).toBe("one")
     expect(stmt.columns[1]).toBe("two")
 })
+
+test("insert 1 int", () => {
+    bb1db._sqlParser.parse("insert into myTable(col1) values(100)")
+    var stmt = bb1db._sqlParser.getStmt()
+    expect(stmt.statementType).toBe(bb1db._sqlStatement.STATEMENT_TYPE.INSERT)
+    expect(stmt.tableName).toBe("myTable")
+    expect(stmt.columns[0]).toBe("col1")
+    expect(stmt.values[0]).toBe(100)
+})
+
+test("insert 1 float", () => {
+    bb1db._sqlParser.parse("insert into myTable(col1) values(1.001)")
+    var stmt = bb1db._sqlParser.getStmt()
+    expect(stmt.statementType).toBe(bb1db._sqlStatement.STATEMENT_TYPE.INSERT)
+    expect(stmt.tableName).toBe("myTable")
+    expect(stmt.columns[0]).toBe("col1")
+    expect(stmt.values[0]).toBe(1.001)
+})
+
+test("insert 1 float < 1", () => {
+    bb1db._sqlParser.parse("insert into myTable(col1) values(0.001)")
+    var stmt = bb1db._sqlParser.getStmt()
+    expect(stmt.statementType).toBe(bb1db._sqlStatement.STATEMENT_TYPE.INSERT)
+    expect(stmt.tableName).toBe("myTable")
+    expect(stmt.columns[0]).toBe("col1")
+    expect(stmt.values[0]).toBe(0.001)
+})
+
+test("insert 1 string", () => {
+    bb1db._sqlParser.parse("insert into myTable(col1) values('hello')")
+    var stmt = bb1db._sqlParser.getStmt()
+    expect(stmt.statementType).toBe(bb1db._sqlStatement.STATEMENT_TYPE.INSERT)
+    expect(stmt.tableName).toBe("myTable")
+    expect(stmt.columns[0]).toBe("col1")
+    expect(stmt.values[0]).toBe("hello")
+})
+
+test("insert 1 string with apostrophe", () => {
+    bb1db._sqlParser.parse("insert into myTable(col1) values('''ello')")
+    var stmt = bb1db._sqlParser.getStmt()
+    expect(stmt.statementType).toBe(bb1db._sqlStatement.STATEMENT_TYPE.INSERT)
+    expect(stmt.tableName).toBe("myTable")
+    expect(stmt.columns[0]).toBe("col1")
+    expect(stmt.values[0]).toBe("'ello")
+})

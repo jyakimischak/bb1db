@@ -3,7 +3,7 @@
 // Red black tree used to store tuples from a database.
 //
 // Note that the 0th item in the tuple is considered the PK and will be used for ordering within the red back tree.
-// Note that duplicated are not allowed and will throw an error.
+// Note that duplicated are not allowed.
 //***************************************************************************************
 
 /**
@@ -42,8 +42,14 @@ export function newRedBlackTree() {
     return {
         root: {t:NIL},
 
+        /**
+         * Add the tuple to the tree and return the PK value (t[0])
+         * If the tuple could not be added then return undefined
+         */
         add: function(tuple) {
-
+            let node = this._insert(tuple)
+            this._insertFixViolations(node)
+            return node == undefined ? undefined : node.t[0]
         }, // insert
 
         /**
@@ -52,7 +58,9 @@ export function newRedBlackTree() {
         _insert: function(tuple) {
             //ensure that the tuple is an array with a 0th element
             if(!(tuple instanceof Array && tuple.length > 0)) {
-                throw "Tuple is not an array or does not have a 0th element."
+                // throw "Tuple is not an array or does not have a 0th element."
+                console.warn("Tuple is not an array or does not have a 0th element.")
+                return undefined
             }
 
             //if there is only a nil node then this is the root.  Add it and make it black.
@@ -82,12 +90,13 @@ export function newRedBlackTree() {
                     curr.l.p = curr
                     curr.r.p = curr
                     break
-                } else if(curr.t[0] >= tuple[0]) {
+                } else if(curr.t[0] > tuple[0]) {
                     curr = curr.l
                 } else if(curr.t[0] < tuple[0]) {
                     curr = curr.r
                 } else {
-                    throw `Duplicate key - ${tuple[0]}`
+                    console.warn(`Duplicate key - ${tuple[0]}`)
+                    return undefined
                 }
             }
             return curr
@@ -97,6 +106,11 @@ export function newRedBlackTree() {
          * Fix violations for an insert.
          */
         _insertFixViolations: function(startNode) {
+            if(startNode == undefined) {
+                console.warn("_insertFixViolations - startNode is undefined")
+                return
+            }
+
             let curr = startNode
 
             while(curr.p.t != ROOT) {

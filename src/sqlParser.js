@@ -44,6 +44,19 @@ SqlStatementCreator.prototype.enterATabColumn = function(ctx) {
 }
 SqlStatementCreator.prototype.exitATabColumn = function(ctx) {
 }
+SqlStatementCreator.prototype.enterInsert = function(ctx) {
+    stmt.insert()
+}
+SqlStatementCreator.prototype.exitInsert = function(ctx) {
+}
+SqlStatementCreator.prototype.enterInsertCols = function(ctx) {
+}
+SqlStatementCreator.prototype.exitInsertCols = function(ctx) {
+}
+SqlStatementCreator.prototype.enterInsertVals = function(ctx) {
+}
+SqlStatementCreator.prototype.exitInsertVals = function(ctx) {
+}
 SqlStatementCreator.prototype.enterTableName = function(ctx) {
     stmt.setTableName(ctx.IDENTIFIER().getText())
 }
@@ -53,6 +66,17 @@ SqlStatementCreator.prototype.enterColumnName = function(ctx) {
     stmt.addColumn(ctx.IDENTIFIER().getText())
 }
 SqlStatementCreator.prototype.exitColumnName = function(ctx) {
+}
+SqlStatementCreator.prototype.enterValue = function(ctx) {
+    if(ctx.NUMBER()) {
+        stmt.addValue(Number(ctx.NUMBER().getText()))
+    } else {
+        stmt.addValue(
+            ctx.STRING().getText().replace(new RegExp("^'"), "").replace(new RegExp("'$"), "").replace("''", "'")
+        )
+    }
+}
+SqlStatementCreator.prototype.exitValue = function(ctx) {
 }
 
 

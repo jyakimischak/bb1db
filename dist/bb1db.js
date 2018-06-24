@@ -138,12 +138,41 @@ function newDatabase(description) {
     return {
         description: dbDesc,
         _tables: {},
+        lastPk: undefined,
+        _rowsModified: 0,
+        _isBatchMode: false,
 
+        /**
+         * execute a single sql statement
+         */
         execute: function(sql) {
+            this._isBatchMode = false
+            this._rowsModified = 0
+            this._executeSingle(sql)
+            return this
+        }, // execute
+
+        /**
+         * execute a batch of sql statements
+         */
+        executeBatch: function(sqlArray) {
+            this._isBatchMode = true
+            this._rowsModified = 0
+            sqlArray.forEach(sql => {
+                this._executeSingle(sql)
+            })
+            console.info(`${this._rowsModified} rows modified`)
+            this._isBatchMode = false
+            return this
+        }, // executeBatch
+
+        /**
+         * execute and executeBatch call this.
+         */
+        _executeSingle: function(sql) {
             let parseError = sqlParser.parse(sql)
             if(parseError) {
                 console.error(`Parse error in - ${sql}`)
-                return this
             }
             let stmt = sqlParser.getStmt()
 
@@ -155,14 +184,16 @@ function newDatabase(description) {
                     this._dropTable(stmt)
                     break;
                 case sqlStatement.STATEMENT_TYPE.ALTER_TABLE:
-                this._alterTable(stmt)
-                break;
+                    this._alterTable(stmt)
+                    break;
+                case sqlStatement.STATEMENT_TYPE.INSERT:
+                    this._insert(stmt)
+                    break;
                 case sqlStatement.STATEMENT_TYPE.NONE: // this should never really happen, should be caught by the parse error above
                 default:
                     console.error(`unknown SQL statement - ${sql}`)
             }
-            return this
-        }, // execute
+        }, // _executeSingle
 
         /**
          * Create a table and add it to this._tables
@@ -178,6 +209,7 @@ function newDatabase(description) {
             if(stmt.isAutoPk) {
                 //seed the pk sequence to 1 for the table
                 table.pkSequence = 1
+                table.isAutoPkOn = true
             }
             table.rows = rbt.newRedBlackTree()
             table.columns = stmt.columns
@@ -235,7 +267,67 @@ function newDatabase(description) {
                 })
                 console.info(`Altered table ${table.tableName}, ${columnsAltered} column(s) dropped`)
             }
-        } // _alterTable
+        }, // _alterTable
+
+        /**
+         * Insert a value
+         * The PK for the inserted row will be placed in this.lastPk (undefined on error).
+         */
+        _insert: function(stmt) {
+            if(stmt.columns.length == 0) {
+                console.warn("No columns specifier in insert")
+                return
+            }
+            if(stmt.columns.length != stmt.values.length) {
+                console.warn("Insert - must be same number of columns and values")
+                return
+            }
+            if(this._tables[stmt.tableName] == undefined) {
+                console.warn(`Table ${stmt.tableName} does not exist`)
+                return
+            }
+
+            let table = this._tables[stmt.tableName]
+            let rowToInsert = new Array(table.columns.length)
+
+            //populate rowToInsert with the values from the insert statement, the order of the columns in rowToInsert matches the order of the columns in the table
+            for(let stmtColI = 0; stmtColI < stmt.columns.length; stmtColI++) {
+                let colI = table.columns.findIndex(e => e == stmt.columns[stmtColI]) // what is the index for this column
+                if(colI == -1) {
+                    console.warn(`Columns unknown: ${stmt.tableName}.${stmt.columns[stmtColI]}`)
+                    return
+                }
+                if(colI == 0 && table.isAutoPk && table.isAutoPkOn) {
+                    console.warn(`Columns unknown: ${stmt.tableName}.${stmt.columns[stmtColI]}`)
+                    return
+                }
+                rowToInsert[colI] = stmt.values[stmtColI] // set the value into the correct position
+            }
+            if(
+                rowToInsert[0] == undefined &&
+                (
+                    !table.isAutoPk ||
+                    (table.isAutoPk && !table.isAutoPkOn)
+                )
+            ) {
+                console.warn(`PK column ${stmt.tableName}.${table.columns[0]} must be set`)
+                return
+            }
+
+            if(table.isAutoPk && table.isAutoPkOn) {
+                rowToInsert[0] = table.pkSequence
+                table.pkSequence++ // if an error occurs later there will be a gap in the sequence for the pk...not a big deal
+            }
+
+            this.lastPk = table.rows.add(rowToInsert)
+            if(this.lastPk != undefined) {
+                this._rowsModified++
+                if(!this._isBatchMode) {
+                    console.info("row inserted")
+                }
+            }
+        } // _insert
+
     }
 }
 
@@ -260,7 +352,7 @@ __webpack_require__.r(__webpack_exports__);
 // Red black tree used to store tuples from a database.
 //
 // Note that the 0th item in the tuple is considered the PK and will be used for ordering within the red back tree.
-// Note that duplicated are not allowed and will throw an error.
+// Note that duplicated are not allowed.
 //***************************************************************************************
 
 /**
@@ -299,8 +391,14 @@ function newRedBlackTree() {
     return {
         root: {t:NIL},
 
+        /**
+         * Add the tuple to the tree and return the PK value (t[0])
+         * If the tuple could not be added then return undefined
+         */
         add: function(tuple) {
-
+            let node = this._insert(tuple)
+            this._insertFixViolations(node)
+            return node == undefined ? undefined : node.t[0]
         }, // insert
 
         /**
@@ -309,7 +407,9 @@ function newRedBlackTree() {
         _insert: function(tuple) {
             //ensure that the tuple is an array with a 0th element
             if(!(tuple instanceof Array && tuple.length > 0)) {
-                throw "Tuple is not an array or does not have a 0th element."
+                // throw "Tuple is not an array or does not have a 0th element."
+                console.warn("Tuple is not an array or does not have a 0th element.")
+                return undefined
             }
 
             //if there is only a nil node then this is the root.  Add it and make it black.
@@ -339,12 +439,13 @@ function newRedBlackTree() {
                     curr.l.p = curr
                     curr.r.p = curr
                     break
-                } else if(curr.t[0] >= tuple[0]) {
+                } else if(curr.t[0] > tuple[0]) {
                     curr = curr.l
                 } else if(curr.t[0] < tuple[0]) {
                     curr = curr.r
                 } else {
-                    throw `Duplicate key - ${tuple[0]}`
+                    console.warn(`Duplicate key - ${tuple[0]}`)
+                    return undefined
                 }
             }
             return curr
@@ -354,6 +455,11 @@ function newRedBlackTree() {
          * Fix violations for an insert.
          */
         _insertFixViolations: function(startNode) {
+            if(startNode == undefined) {
+                console.warn("_insertFixViolations - startNode is undefined")
+                return
+            }
+
             let curr = startNode
 
             while(curr.p.t != ROOT) {
@@ -819,6 +925,19 @@ SqlStatementCreator.prototype.enterATabColumn = function(ctx) {
 }
 SqlStatementCreator.prototype.exitATabColumn = function(ctx) {
 }
+SqlStatementCreator.prototype.enterInsert = function(ctx) {
+    stmt.insert()
+}
+SqlStatementCreator.prototype.exitInsert = function(ctx) {
+}
+SqlStatementCreator.prototype.enterInsertCols = function(ctx) {
+}
+SqlStatementCreator.prototype.exitInsertCols = function(ctx) {
+}
+SqlStatementCreator.prototype.enterInsertVals = function(ctx) {
+}
+SqlStatementCreator.prototype.exitInsertVals = function(ctx) {
+}
 SqlStatementCreator.prototype.enterTableName = function(ctx) {
     stmt.setTableName(ctx.IDENTIFIER().getText())
 }
@@ -828,6 +947,17 @@ SqlStatementCreator.prototype.enterColumnName = function(ctx) {
     stmt.addColumn(ctx.IDENTIFIER().getText())
 }
 SqlStatementCreator.prototype.exitColumnName = function(ctx) {
+}
+SqlStatementCreator.prototype.enterValue = function(ctx) {
+    if(ctx.NUMBER()) {
+        stmt.addValue(Number(ctx.NUMBER().getText()))
+    } else {
+        stmt.addValue(
+            ctx.STRING().getText().replace(new RegExp("^'"), "").replace(new RegExp("'$"), "").replace("''", "'")
+        )
+    }
+}
+SqlStatementCreator.prototype.exitValue = function(ctx) {
 }
 
 
@@ -13235,7 +13365,7 @@ var antlr4 = __webpack_require__(4);
 
 
 var serializedATN = ["\u0003\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964",
-    "\u0002\u0014\u00c1\b\u0001\u0004\u0002\t\u0002\u0004\u0003\t\u0003\u0004",
+    "\u0002\u0014\u00b3\b\u0001\u0004\u0002\t\u0002\u0004\u0003\t\u0003\u0004",
     "\u0004\t\u0004\u0004\u0005\t\u0005\u0004\u0006\t\u0006\u0004\u0007\t",
     "\u0007\u0004\b\t\b\u0004\t\t\t\u0004\n\t\n\u0004\u000b\t\u000b\u0004",
     "\f\t\f\u0004\r\t\r\u0004\u000e\t\u000e\u0004\u000f\t\u000f\u0004\u0010",
@@ -13256,40 +13386,37 @@ var serializedATN = ["\u0003\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964",
     "\u0003\u000f\u0003\u0010\u0003\u0010\u0007\u0010\u0082\n\u0010\f\u0010",
     "\u000e\u0010\u0085\u000b\u0010\u0003\u0011\u0003\u0011\u0003\u0011\u0003",
     "\u0011\u0007\u0011\u008b\n\u0011\f\u0011\u000e\u0011\u008e\u000b\u0011",
-    "\u0003\u0011\u0003\u0011\u0003\u0012\u0003\u0012\u0007\u0012\u0094\n",
-    "\u0012\f\u0012\u000e\u0012\u0097\u000b\u0012\u0003\u0012\u0003\u0012",
-    "\u0003\u0012\u0003\u0012\u0007\u0012\u009d\n\u0012\f\u0012\u000e\u0012",
-    "\u00a0\u000b\u0012\u0003\u0012\u0003\u0012\u0007\u0012\u00a4\n\u0012",
-    "\f\u0012\u000e\u0012\u00a7\u000b\u0012\u0003\u0012\u0003\u0012\u0007",
-    "\u0012\u00ab\n\u0012\f\u0012\u000e\u0012\u00ae\u000b\u0012\u0003\u0012",
-    "\u0005\u0012\u00b1\n\u0012\u0003\u0012\u0007\u0012\u00b4\n\u0012\f\u0012",
-    "\u000e\u0012\u00b7\u000b\u0012\u0005\u0012\u00b9\n\u0012\u0003\u0013",
-    "\u0006\u0013\u00bc\n\u0013\r\u0013\u000e\u0013\u00bd\u0003\u0013\u0003",
-    "\u0013\u00043C\u0002\u0014\u0003\u0003\u0005\u0004\u0007\u0005\t\u0006",
-    "\u000b\u0007\r\b\u000f\t\u0011\n\u0013\u000b\u0015\f\u0017\r\u0019\u000e",
-    "\u001b\u000f\u001d\u0010\u001f\u0011!\u0012#\u0013%\u0014\u0003\u0002",
-    "\t\u0004\u0002\f\f\u000f\u000f\u0005\u0002C\\c|~~\u0005\u00022;C\\c",
-    "|\u0003\u0002))\u0003\u00023;\u0003\u00022;\u0005\u0002\u000b\f\u000f",
-    "\u000f\"\"\u0002\u00cf\u0002\u0003\u0003\u0002\u0002\u0002\u0002\u0005",
-    "\u0003\u0002\u0002\u0002\u0002\u0007\u0003\u0002\u0002\u0002\u0002\t",
-    "\u0003\u0002\u0002\u0002\u0002\u000b\u0003\u0002\u0002\u0002\u0002\r",
-    "\u0003\u0002\u0002\u0002\u0002\u000f\u0003\u0002\u0002\u0002\u0002\u0011",
-    "\u0003\u0002\u0002\u0002\u0002\u0013\u0003\u0002\u0002\u0002\u0002\u0015",
-    "\u0003\u0002\u0002\u0002\u0002\u0017\u0003\u0002\u0002\u0002\u0002\u0019",
-    "\u0003\u0002\u0002\u0002\u0002\u001b\u0003\u0002\u0002\u0002\u0002\u001d",
-    "\u0003\u0002\u0002\u0002\u0002\u001f\u0003\u0002\u0002\u0002\u0002!",
-    "\u0003\u0002\u0002\u0002\u0002#\u0003\u0002\u0002\u0002\u0002%\u0003",
-    "\u0002\u0002\u0002\u0003\'\u0003\u0002\u0002\u0002\u0005)\u0003\u0002",
-    "\u0002\u0002\u0007+\u0003\u0002\u0002\u0002\t-\u0003\u0002\u0002\u0002",
-    "\u000b=\u0003\u0002\u0002\u0002\rK\u0003\u0002\u0002\u0002\u000fR\u0003",
-    "\u0002\u0002\u0002\u0011X\u0003\u0002\u0002\u0002\u0013]\u0003\u0002",
-    "\u0002\u0002\u0015b\u0003\u0002\u0002\u0002\u0017h\u0003\u0002\u0002",
-    "\u0002\u0019l\u0003\u0002\u0002\u0002\u001bs\u0003\u0002\u0002\u0002",
-    "\u001dx\u0003\u0002\u0002\u0002\u001f\u007f\u0003\u0002\u0002\u0002",
-    "!\u0086\u0003\u0002\u0002\u0002#\u00b8\u0003\u0002\u0002\u0002%\u00bb",
-    "\u0003\u0002\u0002\u0002\'(\u0007*\u0002\u0002(\u0004\u0003\u0002\u0002",
-    "\u0002)*\u0007.\u0002\u0002*\u0006\u0003\u0002\u0002\u0002+,\u0007+",
-    "\u0002\u0002,\b\u0003\u0002\u0002\u0002-.\u0007/\u0002\u0002./\u0007",
+    "\u0003\u0011\u0003\u0011\u0003\u0012\u0005\u0012\u0093\n\u0012\u0003",
+    "\u0012\u0006\u0012\u0096\n\u0012\r\u0012\u000e\u0012\u0097\u0003\u0012",
+    "\u0005\u0012\u009b\n\u0012\u0003\u0012\u0006\u0012\u009e\n\u0012\r\u0012",
+    "\u000e\u0012\u009f\u0003\u0012\u0005\u0012\u00a3\n\u0012\u0003\u0012",
+    "\u0007\u0012\u00a6\n\u0012\f\u0012\u000e\u0012\u00a9\u000b\u0012\u0005",
+    "\u0012\u00ab\n\u0012\u0003\u0013\u0006\u0013\u00ae\n\u0013\r\u0013\u000e",
+    "\u0013\u00af\u0003\u0013\u0003\u0013\u00043C\u0002\u0014\u0003\u0003",
+    "\u0005\u0004\u0007\u0005\t\u0006\u000b\u0007\r\b\u000f\t\u0011\n\u0013",
+    "\u000b\u0015\f\u0017\r\u0019\u000e\u001b\u000f\u001d\u0010\u001f\u0011",
+    "!\u0012#\u0013%\u0014\u0003\u0002\b\u0004\u0002\f\f\u000f\u000f\u0005",
+    "\u0002C\\c|~~\u0005\u00022;C\\c|\u0003\u0002))\u0003\u00022;\u0005\u0002",
+    "\u000b\f\u000f\u000f\"\"\u0002\u00c0\u0002\u0003\u0003\u0002\u0002\u0002",
+    "\u0002\u0005\u0003\u0002\u0002\u0002\u0002\u0007\u0003\u0002\u0002\u0002",
+    "\u0002\t\u0003\u0002\u0002\u0002\u0002\u000b\u0003\u0002\u0002\u0002",
+    "\u0002\r\u0003\u0002\u0002\u0002\u0002\u000f\u0003\u0002\u0002\u0002",
+    "\u0002\u0011\u0003\u0002\u0002\u0002\u0002\u0013\u0003\u0002\u0002\u0002",
+    "\u0002\u0015\u0003\u0002\u0002\u0002\u0002\u0017\u0003\u0002\u0002\u0002",
+    "\u0002\u0019\u0003\u0002\u0002\u0002\u0002\u001b\u0003\u0002\u0002\u0002",
+    "\u0002\u001d\u0003\u0002\u0002\u0002\u0002\u001f\u0003\u0002\u0002\u0002",
+    "\u0002!\u0003\u0002\u0002\u0002\u0002#\u0003\u0002\u0002\u0002\u0002",
+    "%\u0003\u0002\u0002\u0002\u0003\'\u0003\u0002\u0002\u0002\u0005)\u0003",
+    "\u0002\u0002\u0002\u0007+\u0003\u0002\u0002\u0002\t-\u0003\u0002\u0002",
+    "\u0002\u000b=\u0003\u0002\u0002\u0002\rK\u0003\u0002\u0002\u0002\u000f",
+    "R\u0003\u0002\u0002\u0002\u0011X\u0003\u0002\u0002\u0002\u0013]\u0003",
+    "\u0002\u0002\u0002\u0015b\u0003\u0002\u0002\u0002\u0017h\u0003\u0002",
+    "\u0002\u0002\u0019l\u0003\u0002\u0002\u0002\u001bs\u0003\u0002\u0002",
+    "\u0002\u001dx\u0003\u0002\u0002\u0002\u001f\u007f\u0003\u0002\u0002",
+    "\u0002!\u0086\u0003\u0002\u0002\u0002#\u00aa\u0003\u0002\u0002\u0002",
+    "%\u00ad\u0003\u0002\u0002\u0002\'(\u0007*\u0002\u0002(\u0004\u0003\u0002",
+    "\u0002\u0002)*\u0007.\u0002\u0002*\u0006\u0003\u0002\u0002\u0002+,\u0007",
+    "+\u0002\u0002,\b\u0003\u0002\u0002\u0002-.\u0007/\u0002\u0002./\u0007",
     "/\u0002\u0002/3\u0003\u0002\u0002\u000202\u000b\u0002\u0002\u000210",
     "\u0003\u0002\u0002\u000225\u0003\u0002\u0002\u000234\u0003\u0002\u0002",
     "\u000231\u0003\u0002\u0002\u000249\u0003\u0002\u0002\u000253\u0003\u0002",
@@ -13329,36 +13456,29 @@ var serializedATN = ["\u0003\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964",
     "\u008c\u008a\u0003\u0002\u0002\u0002\u008c\u008d\u0003\u0002\u0002\u0002",
     "\u008d\u008f\u0003\u0002\u0002\u0002\u008e\u008c\u0003\u0002\u0002\u0002",
     "\u008f\u0090\u0007)\u0002\u0002\u0090\"\u0003\u0002\u0002\u0002\u0091",
-    "\u0095\t\u0006\u0002\u0002\u0092\u0094\t\u0007\u0002\u0002\u0093\u0092",
-    "\u0003\u0002\u0002\u0002\u0094\u0097\u0003\u0002\u0002\u0002\u0095\u0093",
-    "\u0003\u0002\u0002\u0002\u0095\u0096\u0003\u0002\u0002\u0002\u0096\u00b9",
-    "\u0003\u0002\u0002\u0002\u0097\u0095\u0003\u0002\u0002\u0002\u0098\u0099",
-    "\u00072\u0002\u0002\u0099\u009a\u00070\u0002\u0002\u009a\u009e\u0003",
-    "\u0002\u0002\u0002\u009b\u009d\t\u0007\u0002\u0002\u009c\u009b\u0003",
-    "\u0002\u0002\u0002\u009d\u00a0\u0003\u0002\u0002\u0002\u009e\u009c\u0003",
-    "\u0002\u0002\u0002\u009e\u009f\u0003\u0002\u0002\u0002\u009f\u00a1\u0003",
-    "\u0002\u0002\u0002\u00a0\u009e\u0003\u0002\u0002\u0002\u00a1\u00a5\t",
-    "\u0006\u0002\u0002\u00a2\u00a4\t\u0007\u0002\u0002\u00a3\u00a2\u0003",
-    "\u0002\u0002\u0002\u00a4\u00a7\u0003\u0002\u0002\u0002\u00a5\u00a3\u0003",
-    "\u0002\u0002\u0002\u00a5\u00a6\u0003\u0002\u0002\u0002\u00a6\u00b9\u0003",
-    "\u0002\u0002\u0002\u00a7\u00a5\u0003\u0002\u0002\u0002\u00a8\u00ac\t",
-    "\u0006\u0002\u0002\u00a9\u00ab\t\u0007\u0002\u0002\u00aa\u00a9\u0003",
-    "\u0002\u0002\u0002\u00ab\u00ae\u0003\u0002\u0002\u0002\u00ac\u00aa\u0003",
-    "\u0002\u0002\u0002\u00ac\u00ad\u0003\u0002\u0002\u0002\u00ad\u00b0\u0003",
-    "\u0002\u0002\u0002\u00ae\u00ac\u0003\u0002\u0002\u0002\u00af\u00b1\u0007",
-    "0\u0002\u0002\u00b0\u00af\u0003\u0002\u0002\u0002\u00b0\u00b1\u0003",
-    "\u0002\u0002\u0002\u00b1\u00b5\u0003\u0002\u0002\u0002\u00b2\u00b4\t",
-    "\u0007\u0002\u0002\u00b3\u00b2\u0003\u0002\u0002\u0002\u00b4\u00b7\u0003",
-    "\u0002\u0002\u0002\u00b5\u00b3\u0003\u0002\u0002\u0002\u00b5\u00b6\u0003",
-    "\u0002\u0002\u0002\u00b6\u00b9\u0003\u0002\u0002\u0002\u00b7\u00b5\u0003",
-    "\u0002\u0002\u0002\u00b8\u0091\u0003\u0002\u0002\u0002\u00b8\u0098\u0003",
-    "\u0002\u0002\u0002\u00b8\u00a8\u0003\u0002\u0002\u0002\u00b9$\u0003",
-    "\u0002\u0002\u0002\u00ba\u00bc\t\b\u0002\u0002\u00bb\u00ba\u0003\u0002",
-    "\u0002\u0002\u00bc\u00bd\u0003\u0002\u0002\u0002\u00bd\u00bb\u0003\u0002",
-    "\u0002\u0002\u00bd\u00be\u0003\u0002\u0002\u0002\u00be\u00bf\u0003\u0002",
-    "\u0002\u0002\u00bf\u00c0\b\u0013\u0002\u0002\u00c0&\u0003\u0002\u0002",
-    "\u0002\u0012\u000239C\u0081\u0083\u008a\u008c\u0095\u009e\u00a5\u00ac",
-    "\u00b0\u00b5\u00b8\u00bd\u0003\u0002\u0003\u0002"].join("");
+    "\u0093\u0007/\u0002\u0002\u0092\u0091\u0003\u0002\u0002\u0002\u0092",
+    "\u0093\u0003\u0002\u0002\u0002\u0093\u0095\u0003\u0002\u0002\u0002\u0094",
+    "\u0096\t\u0006\u0002\u0002\u0095\u0094\u0003\u0002\u0002\u0002\u0096",
+    "\u0097\u0003\u0002\u0002\u0002\u0097\u0095\u0003\u0002\u0002\u0002\u0097",
+    "\u0098\u0003\u0002\u0002\u0002\u0098\u00ab\u0003\u0002\u0002\u0002\u0099",
+    "\u009b\u0007/\u0002\u0002\u009a\u0099\u0003\u0002\u0002\u0002\u009a",
+    "\u009b\u0003\u0002\u0002\u0002\u009b\u009d\u0003\u0002\u0002\u0002\u009c",
+    "\u009e\t\u0006\u0002\u0002\u009d\u009c\u0003\u0002\u0002\u0002\u009e",
+    "\u009f\u0003\u0002\u0002\u0002\u009f\u009d\u0003\u0002\u0002\u0002\u009f",
+    "\u00a0\u0003\u0002\u0002\u0002\u00a0\u00a2\u0003\u0002\u0002\u0002\u00a1",
+    "\u00a3\u00070\u0002\u0002\u00a2\u00a1\u0003\u0002\u0002\u0002\u00a2",
+    "\u00a3\u0003\u0002\u0002\u0002\u00a3\u00a7\u0003\u0002\u0002\u0002\u00a4",
+    "\u00a6\t\u0006\u0002\u0002\u00a5\u00a4\u0003\u0002\u0002\u0002\u00a6",
+    "\u00a9\u0003\u0002\u0002\u0002\u00a7\u00a5\u0003\u0002\u0002\u0002\u00a7",
+    "\u00a8\u0003\u0002\u0002\u0002\u00a8\u00ab\u0003\u0002\u0002\u0002\u00a9",
+    "\u00a7\u0003\u0002\u0002\u0002\u00aa\u0092\u0003\u0002\u0002\u0002\u00aa",
+    "\u009a\u0003\u0002\u0002\u0002\u00ab$\u0003\u0002\u0002\u0002\u00ac",
+    "\u00ae\t\u0007\u0002\u0002\u00ad\u00ac\u0003\u0002\u0002\u0002\u00ae",
+    "\u00af\u0003\u0002\u0002\u0002\u00af\u00ad\u0003\u0002\u0002\u0002\u00af",
+    "\u00b0\u0003\u0002\u0002\u0002\u00b0\u00b1\u0003\u0002\u0002\u0002\u00b1",
+    "\u00b2\b\u0013\u0002\u0002\u00b2&\u0003\u0002\u0002\u0002\u0012\u0002",
+    "39C\u0081\u0083\u008a\u008c\u0092\u0097\u009a\u009f\u00a2\u00a7\u00aa",
+    "\u00af\u0003\u0002\u0003\u0002"].join("");
 
 
 var atn = new antlr4.atn.ATNDeserializer().deserialize(serializedATN);
@@ -14625,7 +14745,8 @@ const STATEMENT_TYPE = {
     NONE: "NONE",
     CREATE_TABLE: "CREATE_TABLE",
     DROP_TABLE: "DROP_TABLE",
-    ALTER_TABLE: "ALTER_TABLE"
+    ALTER_TABLE: "ALTER_TABLE",
+    INSERT: "INSERT"
 }
 
 
@@ -14658,12 +14779,22 @@ function newStatement() {
             this.isAddColumn = isAddColumn
         },
 
+        insert: function() {
+            this.statementType = STATEMENT_TYPE.INSERT
+            this.columns = []
+            this.values = []
+        },
+
         setTableName: function(tableName) {
             this.tableName = tableName
         },
 
         addColumn: function(columnName) {
             this.columns.push(columnName)
+        },
+
+        addValue: function(value) {
+            this.values.push(value)
         }
 
     }

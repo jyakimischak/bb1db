@@ -125,3 +125,90 @@ test("Create table then try to drop the PK column", () => {
     expect(db._tables.test.columns.length).toBe(2)
     enableOutput()
 })
+
+test("Insert in order valid", () => {
+    disableOutput()
+    let db = bb1db._db.newDatabase()
+    expect(
+        db.execute("create table test(one, two)")
+            .execute("insert into test(one, two) values (123, 'testString')").lastPk
+    ).toBe(123)
+    expect(db._tables["test"].rows.root.t[0]).toBe(123)
+    expect(db._tables["test"].rows.root.t[1]).toBe("testString")
+    enableOutput()
+})
+
+test("Insert in order valid auto pk", () => {
+    disableOutput()
+    let db = bb1db._db.newDatabase()
+    expect(
+        db.execute("create table test(one auto, two)")
+            .execute("insert into test(two) values ('testString')").lastPk
+    ).toBe(1)
+    expect(db._tables["test"].rows.root.t[0]).toBe(1)
+    expect(db._tables["test"].rows.root.t[1]).toBe("testString")
+    enableOutput()
+})
+
+test("Insert out of order valid", () => {
+    disableOutput()
+    let db = bb1db._db.newDatabase()
+    expect(
+        db.execute("create table test(one, two)")
+            .execute("insert into test(two, one) values ('testString', 123)").lastPk
+    ).toBe(123)
+    expect(db._tables["test"].rows.root.t[0]).toBe(123)
+    expect(db._tables["test"].rows.root.t[1]).toBe("testString")
+    enableOutput()
+})
+
+test("Insert invalid unknown column", () => {
+    disableOutput()
+    let db = bb1db._db.newDatabase()
+    expect(
+        db.execute("create table test(one, two)")
+            .execute("insert into test(one, two, invalid) values (123, 'testString', 345)").lastPk
+    ).toBe(undefined)
+    enableOutput()
+})
+
+test("Insert invalid pk when auto", () => {
+    disableOutput()
+    let db = bb1db._db.newDatabase()
+    expect(
+        db.execute("create table test(one auto, two)")
+            .execute("insert into test(one, two) values (123, 'testString')").lastPk
+    ).toBe(undefined)
+    enableOutput()
+})
+
+test("Insert invalid no pk when not auto", () => {
+    disableOutput()
+    let db = bb1db._db.newDatabase()
+    expect(
+        db.execute("create table test(one, two)")
+            .execute("insert into test(two) values ('testString')").lastPk
+    ).toBe(undefined)
+    enableOutput()
+})
+
+test("Batch insert", () => {
+    disableOutput()
+    let db = bb1db._db.newDatabase()
+    db.execute("create table test(one, two)")
+        .executeBatch([
+            "insert into test(one, two) values (1, 'testString')",
+            "insert into test(one, two) values (2, 'testString')",
+            "insert into test(one, two) values (3, 'testString')",
+            "insert into test(one, two) values (4, 'testString')",
+            "insert into test(one, two) values (5, 'testString')",
+            "insert into test(one, two) values (6, 'testString')",
+            "insert into test(one, two) values (7, 'testString')",
+            "insert into test(one, two) values (8, 'testString')",
+            "insert into test(one, two) values (9, 'testString')",
+            "insert into test(one, two) values (10, 'testString')",
+        ])
+    expect(db._rowsModified).toBe(10)
+    enableOutput()
+})
+

@@ -8,7 +8,8 @@ export const STATEMENT_TYPE = {
     NONE: "NONE",
     CREATE_TABLE: "CREATE_TABLE",
     DROP_TABLE: "DROP_TABLE",
-    ALTER_TABLE: "ALTER_TABLE"
+    ALTER_TABLE: "ALTER_TABLE",
+    INSERT: "INSERT"
 }
 
 
@@ -41,12 +42,22 @@ export function newStatement() {
             this.isAddColumn = isAddColumn
         },
 
+        insert: function() {
+            this.statementType = STATEMENT_TYPE.INSERT
+            this.columns = []
+            this.values = []
+        },
+
         setTableName: function(tableName) {
             this.tableName = tableName
         },
 
         addColumn: function(columnName) {
             this.columns.push(columnName)
+        },
+
+        addValue: function(value) {
+            this.values.push(value)
         }
 
     }
