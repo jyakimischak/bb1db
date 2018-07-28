@@ -1,4 +1,8 @@
 
+
+select col1 from test inner join bla on test.id = bla.id
+
+/*
 select myTable.col1, otherTable.col3
 from myTable
 inner join table2 on myTable.col1 = table2.col1 and table2.othercol = 'stuff'
@@ -9,3 +13,4 @@ and (
     or
     col5 <> 'this'
 )
+*/

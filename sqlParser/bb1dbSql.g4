@@ -19,10 +19,10 @@ prog        :
 Create table
 ************************/
 cTab		:
-                CREATE_KW TABLE_KW tableName '('
+                CREATE_KW TABLE_KW tableName LPARAN
 					columnName AUTO_KW?
-                	(',' columnName)*
-                ')'
+                	(COMMA columnName)*
+                RPARAN
             ;
 
 /************************
@@ -41,8 +41,8 @@ aTab		:
 
 aTabColumn :
 				(
-					ADD_KW columnName (',' columnName)*
-					|   DROP_KW columnName (',' columnName)*
+					ADD_KW columnName (COMMA columnName)*
+					|   DROP_KW columnName (COMMA columnName)*
 				)
 		   ;
 
@@ -54,11 +54,11 @@ insert		:
             ;
 
 insertCols	:
-                '(' columnName (',' columnName)* ')'
+                LPARAN columnName (COMMA columnName)* RPARAN
             ;
 
 insertVals	:
-                VALUES_KW '(' value (',' value)* ')'
+                VALUES_KW LPARAN value (COMMA value)* RPARAN
             ;
 
 /************************
@@ -70,8 +70,8 @@ select		:
 
 selectColumns
  		    :
-                SELECT_KW '*'
-                |   SELECT_KW selectColumnName (',' selectColumnName)*
+                SELECT_KW STAR
+                |   SELECT_KW selectColumnName (COMMA selectColumnName)*
             ;
 
 selectFrom
@@ -93,7 +93,7 @@ selectWhere
             ;
 
 condition   :
-                '(' condition ')'
+                LPARAN condition RPARAN
                 |   NOT_KW? selectColumnName EQ (value | selectColumnName)
                 |   NOT_KW? selectColumnName NE (value | selectColumnName)
                 |   NOT_KW? selectColumnName GT (value | selectColumnName)
@@ -138,6 +138,20 @@ COMMENT_BLOCK
   				'/*' .*? '*/' -> channel (HIDDEN)
   			;
 
+LPARAN      :   '('
+            ;
+
+RPARAN      :   ')'
+            ;
+
+DOT         :   '.'
+            ;
+
+COMMA       :   ','
+            ;
+
+STAR        :   '*'
+            ;
 
 CREATE_KW   :   'create'
             ;

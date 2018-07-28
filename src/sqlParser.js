@@ -13,6 +13,10 @@ var stmt = {}
 
 var parseError = false
 
+var inSelectColumns = false
+var inSelectFrom = false
+var inSelectJoin = false
+
 var SqlStatementCreator = function() {
     bb1dbSqlListener.bb1dbSqlListener.call(this)
     return this
@@ -57,8 +61,44 @@ SqlStatementCreator.prototype.enterInsertVals = function(ctx) {
 }
 SqlStatementCreator.prototype.exitInsertVals = function(ctx) {
 }
+SqlStatementCreator.prototype.enterSelect = function(ctx) {
+    stmt.select()
+}
+SqlStatementCreator.prototype.exitSelect = function(ctx) {
+}
+SqlStatementCreator.prototype.enterSelectColumns = function(ctx) {
+    inSelectColumns = true
+}
+SqlStatementCreator.prototype.exitSelectColumns = function(ctx) {
+    inSelectColumns = false
+}
+SqlStatementCreator.prototype.enterSelectFrom = function(ctx) {
+    inSelectFrom = true
+}
+SqlStatementCreator.prototype.exitSelectFrom = function(ctx) {
+    inSelectFrom = false
+}
+SqlStatementCreator.prototype.enterSelectJoin = function(ctx) {
+    inSelectJoin = true
+}
+SqlStatementCreator.prototype.exitSelectJoin = function(ctx) {
+    inSelectJoin = false
+}
+SqlStatementCreator.prototype.enterSelectWhere = function(ctx) {
+}
+SqlStatementCreator.prototype.exitSelectWhere = function(ctx) {
+}
+SqlStatementCreator.prototype.enterCondition = function(ctx) {
+}
+SqlStatementCreator.prototype.exitCondition = function(ctx) {
+}
 SqlStatementCreator.prototype.enterTableName = function(ctx) {
-    stmt.setTableName(ctx.IDENTIFIER().getText())
+    if(inSelectFrom && !inSelectJoin) {
+        stmt.setSelectFromTableName(ctx.IDENTIFIER().getText())
+    } else if (inSelectJoin) {
+    } else {
+        stmt.setTableName(ctx.IDENTIFIER().getText())
+    }
 }
 SqlStatementCreator.prototype.exitTableName = function(ctx) {
 }
@@ -77,6 +117,18 @@ SqlStatementCreator.prototype.enterValue = function(ctx) {
     }
 }
 SqlStatementCreator.prototype.exitValue = function(ctx) {
+}
+SqlStatementCreator.prototype.enterSelectColumnName = function(ctx) {
+    var selectColumn = []
+    selectColumn.push(ctx.IDENTIFIER(0).getText())
+    if(ctx.IDENTIFIER().length > 1) {
+        selectColumn.push(ctx.IDENTIFIER(1).getText())
+    }
+    if(inSelectColumns) {
+        stmt.addSelectColumn(selectColumn)
+    }
+}
+SqlStatementCreator.prototype.exitSelectColumnName = function(ctx) {
 }
 
 

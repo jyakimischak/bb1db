@@ -9,7 +9,8 @@ export const STATEMENT_TYPE = {
     CREATE_TABLE: "CREATE_TABLE",
     DROP_TABLE: "DROP_TABLE",
     ALTER_TABLE: "ALTER_TABLE",
-    INSERT: "INSERT"
+    INSERT: "INSERT",
+    SELECT: "SELECT"
 }
 
 
@@ -58,7 +59,26 @@ export function newStatement() {
 
         addValue: function(value) {
             this.values.push(value)
+        },
+
+        select: function() {
+            this.statementType = STATEMENT_TYPE.SELECT
+            this.selectColumns = []
+        },
+
+        addSelectColumn: function(selectColumn) {
+            this.selectColumns.push(selectColumn)
+        },
+
+        setSelectFromTableName: function(selectFromTableName) {
+            this.selectFromTableName = selectFromTableName
+            this.selectJoins = []
+        },
+
+        addSelectJoinTable: function(selectJoinTableName) {
+            this.selectJoins.push({tableName: selectJoinTableName})
         }
+
 
     }
 }

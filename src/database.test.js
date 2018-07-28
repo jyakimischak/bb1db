@@ -212,3 +212,14 @@ test("Batch insert", () => {
     enableOutput()
 })
 
+test("select star from a table", () => {
+    let db = bb1db._db.newDatabase()
+    db.execute("create table test(col1, col2)")
+        .execute("insert into test(col1, col2) values (1, 'Test Value 1')")
+        .execute("insert into test(col1, col2) values (2, 'Test Value 2')")
+        .execute("insert into test(col1, col2) values (3, 'Test Value 3')")
+        .execute("select * from test inner join bla on test.id = bla.id")
+
+})
+
+

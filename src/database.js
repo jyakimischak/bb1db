@@ -19,6 +19,7 @@ export function newDatabase(description) {
         lastPk: undefined,
         _rowsModified: 0,
         _isBatchMode: false,
+        results: undefined,
 
         /**
          * execute a single sql statement
@@ -66,6 +67,9 @@ export function newDatabase(description) {
                     break;
                 case sqlStatement.STATEMENT_TYPE.INSERT:
                     this._insert(stmt)
+                    break;
+                case sqlStatement.STATEMENT_TYPE.SELECT:
+                    this._select(stmt)
                     break;
                 case sqlStatement.STATEMENT_TYPE.NONE: // this should never really happen, should be caught by the parse error above
                 default:
@@ -152,6 +156,8 @@ export function newDatabase(description) {
          * The PK for the inserted row will be placed in this.lastPk (undefined on error).
          */
         _insert: function(stmt) {
+            this.lastPk = undefined
+
             if(stmt.columns.length == 0) {
                 console.warn("No columns specifier in insert")
                 return
@@ -204,7 +210,22 @@ export function newDatabase(description) {
                     console.info("row inserted")
                 }
             }
-        } // _insert
+        }, // _insert
+
+        /**
+         * Select some values.
+         * The result of the select will be placed into this.results, results will be undefined on error
+         */
+        _select: function(stmt) {
+            console.log(stmt)
+
+            this.results = undefined
+
+            if(stmt.selectFromTableName == undefined) {
+                console.warn("No select from table specified")
+                return
+            }
+        } // _select
 
     }
 }
